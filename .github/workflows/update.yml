@@ -1,0 +1,47 @@
+# Collecte les annonces toutes les heures et publie le site sur GitHub Pages.
+name: Mise à jour des annonces
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Récupérer les annonces déjà publiées
+        run: |
+          mkdir -p site
+          curl -sf "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/annonces.json" -o site/annonces.json || rm -f site/annonces.json
+      - name: Collecter les annonces
+        run: python3 build_static.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
