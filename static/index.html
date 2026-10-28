@@ -1,0 +1,521 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#556b2f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Airsoft Occaz">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Airsoft Occaz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<style>
+:root {
+  --bg: #f4f3ef; --panel: #ffffff; --ink: #1d1f1b; --muted: #6b6f66; --line: #e2e0d9;
+  --accent: #556b2f; --accent-ink: #fff; --accent-soft: #e7ecdc; --warn: #b45309; --fav: #c2410c;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #141612; --panel: #1d201b; --ink: #ecede8; --muted: #9a9e93; --line: #2f332c;
+    --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #141612; --panel: #1d201b; --ink: #ecede8; --muted: #9a9e93; --line: #2f332c;
+  --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 25; background: var(--panel); }
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; padding: 10px 20px; flex-wrap: wrap;
+  padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+.brand { font-weight: 750; font-size: 19px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+.brand small { font-weight: 450; color: var(--muted); font-size: 13px; }
+.search { flex: 1 1 320px; max-width: 560px; position: relative; }
+.search input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn[disabled] { opacity: .6; cursor: progress; }
+#filtersToggle { display: none; }
+
+.layout { display: grid; grid-template-columns: 270px 1fr; gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto; }
+aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh - 90px); overflow: auto;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 6px 16px 16px; }
+.fgroup { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.fgroup:last-child { border-bottom: 0; }
+.fgroup h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 650; }
+.check { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; font-size: 14px; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.check .n { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 13px; cursor: pointer; background: transparent; }
+.chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.row2 { display: flex; gap: 8px; }
+.row2 input, aside select { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.linkbtn { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; }
+
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.toolbar .count { font-weight: 650; margin-right: auto; }
+.toolbar .count span { color: var(--muted); font-weight: 400; font-size: 13px; }
+.toolbar select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel); padding: 7px 10px; cursor: pointer; }
+.seg button.on { background: var(--accent-soft); color: var(--accent); }
+.active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
+.active-filters .chip { background: var(--accent-soft); border-color: transparent; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; position: relative; transition: transform .12s, border-color .12s; }
+.card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.card a.main { text-decoration: none; display: flex; flex-direction: column; flex: 1; }
+.thumb { aspect-ratio: 4/3; background: var(--bg); display: grid; place-items: center; overflow: hidden; color: var(--muted); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.price { font-weight: 750; font-size: 18px; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.price s { font-weight: 450; font-size: 13px; color: var(--muted); }
+.price .off { font-size: 11px; font-weight: 700; color: #fff; background: var(--fav); border-radius: 5px; padding: 1px 5px; }
+.title { font-size: 14px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
+.meta { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: auto; padding-top: 6px; }
+.tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tag.src { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 500; }
+.tag.new { background: var(--warn); color: #fff; }
+.tag.want { background: #7c3aed22; color: #7c3aed; }
+.actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
+.icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #333; cursor: pointer;
+  display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.icon-btn.fav.on { color: var(--fav); }
+.icon-btn.hide { opacity: 0; transition: opacity .12s; }
+.card:hover .icon-btn.hide, .icon-btn.hide:focus { opacity: 1; }
+
+.grid.list { grid-template-columns: 1fr; gap: 8px; }
+.grid.list .card a.main { flex-direction: row; }
+.grid.list .thumb { width: 150px; flex: none; aspect-ratio: 4/3; }
+.grid.list .title { -webkit-line-clamp: 1; min-height: 0; font-size: 15px; }
+
+.pager { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; margin: 24px 0 8px; }
+.pager button { min-width: 38px; height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); cursor: pointer; font-variant-numeric: tabular-nums; }
+.pager button:hover:not([disabled]) { border-color: var(--accent); }
+.pager button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 650; }
+.pager button[disabled] { opacity: .4; cursor: default; }
+.pager .gap { color: var(--muted); padding: 0 2px; }
+.pager-info { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.status { font-size: 12px; color: var(--muted); }
+.status.busy::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); margin-right: 6px; animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.others { font-size: 13px; }
+.others a { display: block; padding: 3px 0; color: var(--accent); text-decoration: none; }
+.others a:hover { text-decoration: underline; }
+.others p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+
+@media (max-width: 860px) {
+  header { padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .brand small { display: none; }
+  .search { order: 5; flex-basis: 100%; }
+  .layout { grid-template-columns: 1fr; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  #filtersToggle { display: inline-block; }
+  aside { display: none; position: fixed; inset: 0; top: 0; max-height: none; z-index: 30; border-radius: 0; padding-top: 50px; }
+  aside.open { display: block; padding-top: max(50px, calc(env(safe-area-inset-top) + 40px)); padding-bottom: env(safe-area-inset-bottom); }
+  #closeFilters { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 16px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .grid.list .thumb { width: 110px; }
+}
+@media (min-width: 861px) { #closeFilters { display: none; } }
+</style>
+<header>
+  <div class="brand">🎯 Airsoft Occaz <small>toutes les annonces d'occasion en France, au même endroit</small></div>
+  <label class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Rechercher : M4, Tokyo Marui, HPA, gilet JPC…" autocomplete="off">
+  </label>
+  <button class="btn" id="filtersToggle">Filtres</button>
+  <span class="status" id="status"></span>
+  <button class="btn primary" id="refresh">Actualiser</button>
+</header>
+
+<div class="layout">
+  <aside id="filters">
+    <button class="btn" id="closeFilters">Voir les résultats</button>
+    <div class="fgroup">
+      <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Filtres</h3><button class="linkbtn" id="reset">Tout réinitialiser</button></div>
+    </div>
+    <div class="fgroup"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">Site</h3><button class="linkbtn" id="allSources">Tous</button></div><div id="f-source"></div></div>
+    <div class="fgroup"><h3>Catégorie</h3><div id="f-category"></div></div>
+    <div class="fgroup"><h3>Motorisation</h3><div class="chips" id="f-motor"></div></div>
+    <div class="fgroup"><h3>Prix (€)</h3>
+      <div class="row2"><input id="pmin" type="number" min="0" placeholder="Min"><input id="pmax" type="number" min="0" placeholder="Max"></div>
+    </div>
+    <div class="fgroup"><h3>Région</h3><select id="f-region"><option value="">Toute la France</option></select></div>
+    <div class="fgroup"><h3>Publiée</h3><div class="chips" id="f-age"></div></div>
+    <div class="fgroup"><h3>Vendeur</h3><div class="chips" id="f-seller"></div></div>
+    <div class="fgroup"><h3>Options</h3>
+      <label class="check"><input type="checkbox" id="o-photo"> Avec photo uniquement</label>
+      <label class="check"><input type="checkbox" id="o-price"> Avec prix uniquement</label>
+      <label class="check"><input type="checkbox" id="o-want"> Inclure les « recherche »</label>
+      <label class="check"><input type="checkbox" id="o-fav"> Mes favoris uniquement</label>
+      <label class="check"><input type="checkbox" id="o-hidden"> Afficher les annonces masquées</label>
+    </div>
+    <div class="fgroup others"><h3>À consulter aussi</h3>
+      <a href="https://www.france-airsoft.fr/forum/index.php?/forum/53-occaz/" target="_blank" rel="noopener">France-Airsoft — forum Occaz ↗</a>
+      <a href="https://www.vinted.fr/catalog?search_text=airsoft" target="_blank" rel="noopener">Vinted — airsoft ↗</a>
+      <a href="https://www.ebay.fr/sch/i.html?_nkw=airsoft&LH_ItemCondition=3000&LH_PrefLoc=1" target="_blank" rel="noopener">eBay.fr — airsoft d'occasion ↗</a>
+      <a href="https://www.facebook.com/marketplace/search/?query=airsoft" target="_blank" rel="noopener">Facebook Marketplace ↗</a>
+      <a href="https://www.phenixairsoft.com/" target="_blank" rel="noopener">Phénix Airsoft ↗</a>
+      <a href="https://www.leboncoin.fr/recherche?text=airsoft" target="_blank" rel="noopener">Leboncoin — airsoft ↗</a>
+      <p>Ces sites bloquent la lecture automatique ou demandent un compte, donc leurs annonces n'apparaissent pas ici.</p>
+    </div>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <div class="count" id="count">Chargement…</div>
+      <select id="sort" aria-label="Trier">
+        <option value="recent">Plus récentes</option>
+        <option value="new">Nouveautés (vues en premier)</option>
+        <option value="price-asc">Prix croissant</option>
+        <option value="price-desc">Prix décroissant</option>
+        <option value="site">Par site</option>
+        <option value="title">Titre A → Z</option>
+      </select>
+      <div class="seg" role="group" aria-label="Affichage">
+        <button id="v-grid" class="on" title="Grille">▦</button><button id="v-list" title="Liste">☰</button>
+      </div>
+    </div>
+    <div class="active-filters" id="active"></div>
+    <div class="grid" id="grid"></div>
+    <nav class="pager" id="pager" aria-label="Pages"></nav>
+    <div class="pager-info" id="pagerInfo"></div>
+  </main>
+</div>
+
+<script>
+const PAGE = 48;
+const AGES = [["", "Toutes"], ["1", "24 h"], ["3", "3 jours"], ["7", "7 jours"], ["30", "30 jours"]];
+const MOTORS = ["AEG", "GBB", "HPA", "Gaz", "CO2", "Spring", "AEP"];
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const SELLERS = [["particulier", "Particuliers"], ["boutique", "Boutiques"]];
+// Boutiques = zones occasion des magasins (Airsoft Entrepôt, OPS) et pros de NaturaBuy
+const sellerOf = (x) => /^(boutique|pro)/.test(x.seller || "") ? "boutique" : "particulier";
+const defaults = () => ({ q: "", category: [], motor: [], source: [], seller: "", region: "", age: "", pmin: "", pmax: "",
+  photo: false, price: false, want: false, fav: false, hidden: false, sort: "recent", view: "grid" });
+let F = Object.assign(defaults(), store.get("ao-filters", {}));
+let favs = new Set(store.get("ao-favs", []));
+let hidden = new Set(store.get("ao-hidden", []));
+let all = [], page = 1, updated = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const fmtPrice = (p) => p == null ? "Prix non indiqué" : p.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: p % 1 ? 2 : 0 });
+
+function ago(iso) {
+  if (!iso) return "";
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 3600) return `il y a ${Math.max(1, Math.round(s / 60))} min`;
+  if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
+  if (s < 86400 * 30) return `il y a ${Math.round(s / 86400)} j`;
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function save() { store.set("ao-filters", F); }
+
+// Filtrage : `skip` permet de calculer les compteurs d'une facette sans son propre filtre
+function matches(x, skip) {
+  if (!F.hidden && hidden.has(x.id)) return false;
+  if (!F.want && x.kind === "recherche") return false;
+  if (F.fav && !favs.has(x.id)) return false;
+  if (F.photo && !x.image) return false;
+  if (F.price && x.price == null) return false;
+  if (skip !== "category" && F.category.length && !F.category.includes(x.category)) return false;
+  if (skip !== "motor" && F.motor.length && !F.motor.includes(x.motor)) return false;
+  if (skip !== "source" && F.source.length && !F.source.includes(x.source)) return false;
+  if (skip !== "region" && F.region && x.region !== F.region) return false;
+  if (skip !== "seller" && F.seller && sellerOf(x) !== F.seller) return false;
+  if (F.pmin !== "" && (x.price == null || x.price < +F.pmin)) return false;
+  if (F.pmax !== "" && (x.price == null || x.price > +F.pmax)) return false;
+  if (F.age) {
+    const d = x.date || x.first_seen;
+    if (!d || Date.now() - new Date(d) > F.age * 86400000) return false;
+  }
+  if (F.q) {
+    const hay = x._hay ??= norm([x.title, x.category, x.subcategory, x.motor, x.location, x.region, x.source, x.condition].join(" "));
+    if (!norm(F.q).split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
+  }
+  return true;
+}
+
+const SORTS = {
+  recent: (a, b) => (b.date || b.first_seen || "").localeCompare(a.date || a.first_seen || ""),
+  new: (a, b) => (b.first_seen || "").localeCompare(a.first_seen || "") || SORTS.recent(a, b),
+  "price-asc": (a, b) => (a.price ?? Infinity) - (b.price ?? Infinity),
+  "price-desc": (a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity),
+  title: (a, b) => a.title.localeCompare(b.title, "fr"),
+  site: (a, b) => a.source.localeCompare(b.source) || SORTS.recent(a, b),
+};
+
+function counts(field) {
+  const c = {};
+  for (const x of all) if (matches(x, field)) c[x[field] ?? "—"] = (c[x[field] ?? "—"] || 0) + 1;
+  return c;
+}
+
+function renderFacets() {
+  const checklist = (el, field, labels, extra = []) => {
+    const c = counts(field);
+    const keys = [...new Set([...extra, ...all.map((x) => x[field]).filter(Boolean)])].sort((a, b) => (c[b] || 0) - (c[a] || 0));
+    $(el).innerHTML = keys.map((k) => `<label class="check" ${field === "source" && sourceInfo[k]?.ok === false ? `title="Site injoignable lors de la dernière collecte"` : ""}><input type="checkbox" data-f="${field}" value="${esc(k)}" ${F[field].includes(k) ? "checked" : ""}>${esc(labels?.[k] || k)}${field === "source" && sourceInfo[k]?.ok === false ? " ⚠️" : ""}<span class="n">${c[k] || 0}</span></label>`).join("");
+  };
+  checklist("f-category", "category");
+  checklist("f-source", "source", null, Object.keys(sourceInfo));  // y compris les sites sans annonce en ce moment
+  const mc = counts("motor");
+  $("f-motor").innerHTML = MOTORS.map((m) => `<button class="chip ${F.motor.includes(m) ? "on" : ""}" data-motor="${m}">${m} <small>${mc[m] || 0}</small></button>`).join("");
+  const sc = {};
+  for (const x of all) if (matches(x, "seller")) sc[sellerOf(x)] = (sc[sellerOf(x)] || 0) + 1;
+  $("f-seller").innerHTML = [["", "Tous"], ...SELLERS].map(([v, l]) => `<button class="chip ${F.seller === v ? "on" : ""}" data-seller="${v}">${l}${v ? ` <small>${sc[v] || 0}</small>` : ""}</button>`).join("");
+  $("f-age").innerHTML = AGES.map(([v, l]) => `<button class="chip ${F.age === v ? "on" : ""}" data-age="${v}">${l}</button>`).join("");
+  const rc = counts("region");
+  const regions = [...new Set(all.map((x) => x.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+  $("f-region").innerHTML = `<option value="">Toute la France</option>` +
+    regions.map((r) => `<option value="${esc(r)}" ${F.region === r ? "selected" : ""}>${esc(r)} (${rc[r] || 0})</option>`).join("");
+}
+
+// Hébergée chez Claude, la page ne peut pas charger d'images d'autres sites : elle utilise les miniatures publiées avec elle
+// Les miniatures sont réparties en paquets (x.t) : seuls ceux des annonces affichées sont chargés
+let thumbs = {}, useThumbs = false, chunks = {};
+const thumbOf = (x) => useThumbs ? thumbs[x.id] : x.image;
+function wantThumbs(visible) {
+  if (!useThumbs) return;
+  for (const t of new Set(visible.map((x) => x.t).filter((t) => t != null && !chunks[t]))) {
+    chunks[t] = "loading";
+    fetch(`thumbs-${String(t).padStart(2, "0")}.json`)
+      .then((r) => r.json())
+      .then((j) => { Object.assign(thumbs, j); chunks[t] = "ok"; render(false); })
+      .catch(() => { chunks[t] = "failed"; });
+  }
+}
+
+function card(x) {
+  // "Nouveau" = apparue après la 1re collecte, il y a moins de 48 h
+  const isNew = x.first_seen && x.first_seen > firstBatch && Date.now() - new Date(x.first_seen) < 172800000;
+  const tags = [
+    x.kind === "recherche" ? `<span class="tag want">Recherche</span>` : "",
+    isNew ? `<span class="tag new">Nouveau</span>` : "",
+    `<span class="tag">${esc(x.category)}</span>`,
+    x.motor ? `<span class="tag">${esc(x.motor)}</span>` : "",
+    x.condition && x.condition !== "Occasion" ? `<span class="tag src">${esc(x.condition)}</span>` : "",
+  ].join("");
+  return `<article class="card">
+    <a class="main" href="${esc(x.url)}" target="_blank" rel="noopener">
+      <div class="thumb">${thumbOf(x) ? `<img loading="lazy" src="${esc(thumbOf(x))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : "Pas de photo"}</div>
+      <div class="body">
+        <div class="price">${fmtPrice(x.price)}${x.price_new && x.price ? ` <s>${fmtPrice(x.price_new)}</s><span class="off">−${Math.round(100 - (x.price / x.price_new) * 100)} %</span>` : ""}</div>
+        <div class="title" title="${esc(x.title)}">${esc(x.title)}</div>
+        <div class="tags">${tags}</div>
+        <div class="meta"><span>📍 ${esc(x.region || x.location || "France")}</span>${x.date || x.date_text ? `<span>🕒 ${esc(x.date ? ago(x.date) : x.date_text)}</span>` : ""}<span>${esc(x.source)}</span></div>
+      </div>
+    </a>
+    <div class="actions">
+      <button class="icon-btn hide" data-hide="${esc(x.id)}" title="${hidden.has(x.id) ? "Réafficher" : "Masquer cette annonce"}">${hidden.has(x.id) ? "↺" : "✕"}</button>
+      <button class="icon-btn fav ${favs.has(x.id) ? "on" : ""}" data-fav="${esc(x.id)}" title="Favori">${favs.has(x.id) ? "♥" : "♡"}</button>
+    </div>
+  </article>`;
+}
+
+function renderActive() {
+  const chips = [];
+  if (F.q) chips.push(["q", `« ${F.q} »`]);
+  F.category.forEach((v) => chips.push(["category:" + v, v]));
+  F.motor.forEach((v) => chips.push(["motor:" + v, v]));
+  F.source.forEach((v) => chips.push(["source:" + v, v]));
+  if (F.region) chips.push(["region", F.region]);
+  if (F.seller) chips.push(["seller", SELLERS.find((s) => s[0] === F.seller)[1]]);
+  if (F.pmin !== "" || F.pmax !== "") chips.push(["price", `${F.pmin || 0} – ${F.pmax || "∞"} €`]);
+  if (F.age) chips.push(["age", AGES.find((a) => a[0] === F.age)[1]]);
+  if (F.fav) chips.push(["fav", "Favoris"]);
+  $("active").innerHTML = chips.map(([k, l]) => `<button class="chip" data-remove="${esc(k)}">${esc(l)} ✕</button>`).join("");
+}
+
+function render(resetPaging = true) {
+  if (resetPaging) page = 1;
+  const list = all.filter((x) => matches(x)).sort(SORTS[F.sort]);
+  $("count").innerHTML = `${list.length.toLocaleString("fr-FR")} annonce${list.length > 1 ? "s" : ""} <span>sur ${all.length.toLocaleString("fr-FR")}</span>`;
+  $("grid").className = "grid" + (F.view === "list" ? " list" : "");
+  const pages = Math.max(1, Math.ceil(list.length / PAGE));
+  page = Math.min(page, pages);
+  const visible = list.slice((page - 1) * PAGE, page * PAGE);
+  wantThumbs(visible);
+  $("grid").innerHTML = list.length ? visible.map(card).join("")
+    : `<div class="empty">${all.length ? "Aucune annonce ne correspond à ces filtres." : "Aucune annonce pour l'instant : l'actualisation est en cours…"}</div>`;
+  renderPager(pages, list.length);
+  renderFacets();
+  renderActive();
+  syncInputs();
+  save();
+}
+
+// Numéros de page : 1 … 4 5 [6] 7 8 … 74
+function renderPager(pages, total) {
+  if (pages <= 1) { $("pager").innerHTML = ""; $("pagerInfo").textContent = ""; return; }
+  const nums = new Set([1, pages]);
+  for (let i = page - 2; i <= page + 2; i++) if (i >= 1 && i <= pages) nums.add(i);
+  const sorted = [...nums].sort((a, b) => a - b);
+  let html = `<button data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Page précédente">‹</button>`;
+  sorted.forEach((n, i) => {
+    if (i && n - sorted[i - 1] > 1) html += `<span class="gap">…</span>`;
+    html += `<button data-page="${n}" class="${n === page ? "on" : ""}" ${n === page ? 'aria-current="page"' : ""}>${n}</button>`;
+  });
+  html += `<button data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Page suivante">›</button>`;
+  $("pager").innerHTML = html;
+  $("pagerInfo").textContent = `Annonces ${((page - 1) * PAGE + 1).toLocaleString("fr-FR")} à ${Math.min(page * PAGE, total).toLocaleString("fr-FR")} sur ${total.toLocaleString("fr-FR")}`;
+}
+
+function syncInputs() {
+  if (document.activeElement !== $("q")) $("q").value = F.q;
+  $("pmin").value = F.pmin; $("pmax").value = F.pmax; $("sort").value = F.sort;
+  $("o-photo").checked = F.photo; $("o-price").checked = F.price; $("o-want").checked = F.want; $("o-fav").checked = F.fav; $("o-hidden").checked = F.hidden;
+  $("v-grid").classList.toggle("on", F.view === "grid"); $("v-list").classList.toggle("on", F.view === "list");
+}
+
+let firstBatch = "", updatedThumbs = null, sourceInfo = {};
+let staticMode = false;
+async function getData() {
+  if (!staticMode) {
+    try {
+      const r = await fetch("api/annonces", { cache: "no-store" });
+      if (r.ok && (r.headers.get("content-type") || "").includes("json")) return await r.json();
+    } catch {}
+  }
+  staticMode = true;  // version hébergée : annonces.json régénéré automatiquement
+  $("refresh").hidden = true;
+  return await (await fetch("annonces.json", { cache: "no-cache" })).json();
+}
+async function load() {
+  const d = await getData();
+  all = d.listings; updated = d.updated; sourceInfo = d.sources || {};
+  // Miniatures publiées avec la page (version Claude) ; sur GitHub Pages, les photos d'origine
+  if (staticMode && all.some((x) => x.t != null) && d.updated !== updatedThumbs) { useThumbs = true; thumbs = {}; chunks = {}; updatedThumbs = d.updated; }
+  firstBatch = all.reduce((m, x) => (x.first_seen && (!m || x.first_seen < m) ? x.first_seen : m), "");
+  setStatus(d.running, d.updated);
+  render(false);
+  if (d.running) poll();
+}
+
+function setStatus(running, upd) {
+  $("status").className = "status" + (running ? " busy" : "");
+  $("status").textContent = running ? "Actualisation…" : upd ? `Mis à jour ${ago(upd)}` : "";
+  $("refresh").disabled = running;
+}
+
+let polling = false;
+async function poll() {
+  if (polling) return; polling = true;
+  while (true) {
+    await new Promise((r) => setTimeout(r, 2500));
+    const s = await (await fetch("api/status")).json();
+    setStatus(s.running, s.updated);
+    if (s.log.length) $("status").title = s.log.join("\n");
+    if (!s.running) break;
+  }
+  polling = false;
+  load();
+}
+
+// --- Événements ---
+let qTimer;
+$("q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => { F.q = e.target.value.trim(); render(); }, 150); });
+$("pmin").addEventListener("change", (e) => { F.pmin = e.target.value; render(); });
+$("pmax").addEventListener("change", (e) => { F.pmax = e.target.value; render(); });
+$("sort").addEventListener("change", (e) => { F.sort = e.target.value; render(); });
+$("f-region").addEventListener("change", (e) => { F.region = e.target.value; render(); });
+for (const [id, k] of [["o-photo", "photo"], ["o-price", "price"], ["o-want", "want"], ["o-fav", "fav"], ["o-hidden", "hidden"]])
+  $(id).addEventListener("change", (e) => { F[k] = e.target.checked; render(); });
+$("v-grid").onclick = () => { F.view = "grid"; render(false); };
+$("v-list").onclick = () => { F.view = "list"; render(false); };
+$("pager").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-page]");
+  if (!b || b.disabled) return;
+  page = +b.dataset.page;
+  render(false);
+  document.querySelector("main").scrollIntoView({ block: "start" });
+});
+$("allSources").onclick = () => { F.source = []; render(); };
+$("reset").onclick = () => { F = Object.assign(defaults(), { sort: F.sort, view: F.view }); render(); };
+$("filtersToggle").onclick = () => $("filters").classList.add("open");
+$("closeFilters").onclick = () => $("filters").classList.remove("open");
+$("refresh").onclick = async () => { await fetch("api/refresh", { method: "POST" }); setStatus(true); poll(); };
+// Retour sur l'app (iPhone) : recharge les annonces si elles ont changé
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load().catch(() => {}); });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+document.addEventListener("change", (e) => {
+  const f = e.target.dataset.f;
+  if (!f) return;
+  F[f] = e.target.checked ? [...F[f], e.target.value] : F[f].filter((v) => v !== e.target.value);
+  render();
+});
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-motor],[data-age],[data-seller],[data-fav],[data-hide],[data-remove]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.motor) F.motor = F.motor.includes(d.motor) ? F.motor.filter((m) => m !== d.motor) : [...F.motor, d.motor];
+  else if (d.age !== undefined) F.age = d.age;
+  else if (d.seller !== undefined) F.seller = d.seller;
+  else if (d.fav) { favs.has(d.fav) ? favs.delete(d.fav) : favs.add(d.fav); savePrefs(); return render(false); }
+  else if (d.hide) { hidden.has(d.hide) ? hidden.delete(d.hide) : hidden.add(d.hide); savePrefs(); return render(false); }
+  else if (d.remove) {
+    const [k, v] = d.remove.split(/:(.*)/s);
+    if (v !== undefined) F[k] = F[k].filter((x) => x !== v);
+    else if (k === "price") { F.pmin = ""; F.pmax = ""; }
+    else F[k] = defaults()[k];
+  }
+  render();
+});
+
+// Sur claude.ai : favoris et annonces masquées suivent le compte (Mac ↔ iPhone)
+let prefsRef = null, prefsTimer, prefsWriting = Promise.resolve();
+function savePrefs() {
+  store.set("ao-favs", [...favs]); store.set("ao-hidden", [...hidden]);
+  if (!prefsRef) return;
+  clearTimeout(prefsTimer);
+  prefsTimer = setTimeout(() => {
+    const body = { favs: [...favs], hidden: [...hidden] };
+    prefsWriting = prefsWriting.then(() => prefsRef.set(body)).catch(() => {});
+  }, 800);
+}
+(async () => {
+  if (!window.claude?.use) return;
+  const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+  const uid = await user?.id();
+  if (!db || !uid) return;
+  const ref = db.doc(`data/users/${uid}/prefs`);
+  const snap = await ref.get().catch(() => null);
+  if (!snap) return;
+  prefsRef = ref;
+  if (snap.exists) {
+    const p = snap.data();
+    favs = new Set([...(p.favs || []), ...favs]); hidden = new Set([...(p.hidden || []), ...hidden]);
+    if (favs.size !== (p.favs || []).length || hidden.size !== (p.hidden || []).length) savePrefs();
+    render(false);
+  } else if (favs.size || hidden.size) savePrefs();
+  ref.onSnapshot((s) => {
+    if (!s.exists || s.metadata.hasPendingWrites) return;
+    const p = s.data();
+    favs = new Set(p.favs || []); hidden = new Set(p.hidden || []);
+    render(false);
+  }, () => {});
+})();
+
+load().catch(() => { $("count").textContent = "Impossible de charger les annonces (hors ligne ?)."; });
+</script>
+
