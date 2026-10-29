@@ -1,11 +1,13 @@
-# Collecte les annonces toutes les heures et publie le site sur GitHub Pages.
+# Collecte les annonces et publie le site sur GitHub Pages.
+# Déclenchement principal : toutes les heures par cron-job.org (« workflow_dispatch », voir README),
+# car GitHub retarde ou saute souvent ses propres tâches planifiées. Celle ci-dessous sert de secours.
 # Une fois par mois (début du mois), enregistre la date dans maintenance.txt : GitHub met en pause les tâches
 # planifiées d'un dépôt public resté 60 jours sans modification.
 name: Mise à jour des annonces
 
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "47 */2 * * *"  # secours, toutes les 2 heures
   workflow_dispatch:
   push:
     branches: [main]
@@ -22,7 +24,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,7 +37,7 @@ jobs:
       - name: Collecter les annonces
         run: python3 build_static.py
       - name: Garder la mise à jour active (une fois par mois)
-        if: github.event_name == 'schedule'
+        if: github.event_name != 'push'
         run: |
           # Premier passage des 7 premiers jours du mois, si ce mois-ci n'est pas encore fait
           if [ "$(date -u +%-d)" -le 7 ] && ! grep -qs "$(date -u +%Y-%m)" maintenance.txt; then
