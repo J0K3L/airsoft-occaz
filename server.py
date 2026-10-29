@@ -7,6 +7,7 @@ Options   :  --port 8765  --pages N  (limite les pages lues par site ; défaut :
 """
 import argparse
 import json
+from collections import Counter
 import os
 import socket
 import threading
@@ -15,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
+import enrich
 import scrapers
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +50,7 @@ def refresh():
         log("Actualisation lancée")
         previous = {x["id"]: x for x in load()["listings"]}
         listings, sources = [], {}
+        prev_counts = Counter(x["source"] for x in previous.values())
         with ThreadPoolExecutor(len(scrapers.SOURCES)) as pool:
             futures = {name: pool.submit(fn, state["pages"] or scrapers.DEFAULT_PAGES[name], log)
                        for name, fn in scrapers.SOURCES.items()}
@@ -55,6 +58,13 @@ def refresh():
                 try:
                     items = fut.result()
                     sources[name] = {"ok": True, "count": len(items)}
+                    before = prev_counts.get(name, 0)
+                    if before >= 20 and len(items) < before / 2:
+                        # Chute brutale = site probablement modifié : on garde les annonces d'avant et on signale
+                        warn = f"seulement {len(items)} annonces trouvées au lieu d'environ {before} : le site a peut-être changé"
+                        items = [x for x in previous.values() if x["source"] == name]
+                        sources[name] = {"ok": False, "count": len(items), "warn": warn}
+                        log(f"{name} : {warn}")
                 except Exception as e:  # un site en panne ne bloque pas les autres
                     items = [x for x in previous.values() if x["source"] == name]
                     sources[name] = {"ok": False, "count": len(items), "error": str(e)}
@@ -64,11 +74,18 @@ def refresh():
         listings = list({x["id"]: x for x in reversed(listings)}.values())[::-1]
         now = datetime.now().isoformat(timespec="minutes")
         recent = (datetime.now() - timedelta(days=2)).isoformat(timespec="minutes")
+        known_sources = {x["source"] for x in previous.values()}
         for x in listings:  # mémorise la 1re fois qu'on a vu l'annonce
             seen = previous.get(x["id"], {}).get("first_seen")
-            if not seen:  # une annonce ancienne découverte tardivement n'est pas « nouvelle »
-                seen = x["date"] if x.get("date") and x["date"] < recent else now
+            if x["id"] not in previous:  # une annonce ancienne découverte tardivement n'est pas « nouvelle »
+                if x.get("date"):
+                    seen = x["date"] if x["date"] < recent else now
+                elif x["source"] in known_sources:
+                    seen = now
+                else:  # site tout juste ajouté et sans dates : rien n'est « nouveau » au premier passage
+                    seen = None
             x["first_seen"] = seen
+        enrich.enrich(listings, log)
         os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
         with open(DATA_FILE + ".tmp", "w", encoding="utf-8") as f:
             json.dump({"updated": now, "listings": listings, "sources": sources}, f, ensure_ascii=False)

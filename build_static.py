@@ -15,25 +15,38 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "site")
 
 
+def slim(x):
+    """Allège annonces.json pour les téléphones : sans champs vides ni doublons d'information."""
+    y = {k: v for k, v in x.items() if v not in (None, "", [], False)}
+    if y.get("date"):
+        y.pop("date_text", None)
+    if y.get("kind") == "offre":
+        y.pop("kind")
+    if y.get("location") == y.get("region"):
+        y.pop("location", None)
+    return y
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pages", type=int, default=None, help="limite de pages par site (défaut : toutes)")
     args = ap.parse_args()
 
-    # Reprend le dernier annonces.json publié (pour garder les dates "vue pour la 1re fois")
-    prev = os.path.join(OUT, "annonces.json")
-    if os.path.exists(prev):
+    # Reprend le dernier annonces.json publié (dates « vue pour la 1re fois », annonces d'un site en panne)
+    prev_path = os.path.join(OUT, "annonces.json")
+    if os.path.exists(prev_path):
         os.makedirs(os.path.dirname(server.DATA_FILE), exist_ok=True)
-        shutil.copy(prev, server.DATA_FILE)
+        shutil.copy(prev_path, server.DATA_FILE)
 
     server.state["pages"] = args.pages
     server.refresh()
+    data = server.load()
 
     shutil.copytree(os.path.join(ROOT, "static"), OUT, dirs_exist_ok=True)
-    shutil.copy(server.DATA_FILE, prev)
-    with open(prev, encoding="utf-8") as f:
-        n = len(json.load(f)["listings"])
-    print(f"{datetime.now():%H:%M} site/ prêt : {n} annonces")
+    data["listings"] = [slim(x) for x in data["listings"]]
+    with open(prev_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"{datetime.now():%H:%M} site/ prêt : {len(data['listings'])} annonces, {os.path.getsize(prev_path) // 1024} Ko")
 
 
 if __name__ == "__main__":

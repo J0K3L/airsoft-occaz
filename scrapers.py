@@ -6,6 +6,7 @@ Chaque collecteur renvoie une liste de dicts normalisés :
 Uniquement la bibliothèque standard Python.
 """
 import html
+import json
 import os
 import re
 import ssl
@@ -497,6 +498,155 @@ def scrape_ops_store(pages=20, log=print):
     return out
 
 
+# --- peew.fr (toutes les annonces sur une seule page) ------------------------
+
+PEEW_CATS = {"réplique": "", "gear": "Équipement & tenues", "équipement": "Équipement & tenues",
+             "accessoire": "", "pièce": "Pièces & upgrades", "consommable": "Autre"}
+
+
+def scrape_peew(pages=1, log=print):
+    h = fetch("https://peew.fr/search")
+    out, seen = [], set()
+    for b in re.split(r'(?=<a [^>]*href="/listings/)', h)[1:]:
+        b = b.split("</a>", 1)[0]
+        slug = grab(r'href="/listings/([^"?#]+)"', b)
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        title = clean(grab(r"<h3[^>]*>(.*?)</h3>", b))
+        desc = clean(grab(r'<p class="text-muted-foreground[^"]*">(.*?)</p>', b))
+        badges = [clean(x) for x in re.findall(r'<span class="[^"]*uppercase tracking-wider[^"]*">(.*?)</span>', b)]
+        kind_badge = badges[0].lower() if badges else ""
+        category, motor = classify_listing(kind_badge if kind_badge != "réplique" else "", title, desc)
+        if PEEW_CATS.get(kind_badge):
+            category = PEEW_CATS[kind_badge]
+        meta = [clean(x) for x in re.findall(r'<div class="flex items-center gap-1\.5">(.*?)</div>', b, re.S)]
+        img = grab(r'<img[^>]*\ssrc="([^"]+)"', b)
+        out.append({
+            "id": "pw-" + slug,
+            "source": "peew.fr",
+            "title": title,
+            "price": parse_price(grab(r'rounded-lg text-lg">(.*?)</div>', b)),
+            "url": "https://peew.fr/listings/" + slug,
+            "image": "https://peew.fr" + html.unescape(img).replace("w=3840", "w=640") if img else None,
+            "region": None,
+            "location": meta[0] if meta else "",
+            "category": category,
+            "subcategory": badges[0] if badges else "",
+            "motor": motor,
+            "condition": badges[1].capitalize() if len(badges) > 1 else None,
+            "seller": None,
+            "kind": "recherche" if is_wanted(title) else "offre",
+            "date": None,
+            "date_text": "",
+        })
+    log(f"peew.fr : {len(out)} annonces")
+    return out
+
+
+# --- airsoftone.fr (24 dernières annonces par rubrique, le reste se charge en JavaScript) ---
+
+AIRSOFTONE_CATS = ["", "aeg", "aep", "gbb", "gbbr", "hpa", "sniper", "shotgun", "gear"]
+AIRSOFTONE_SLUGS = {"aeg": "Réplique longue", "gbbr": "Réplique longue", "hpa": "Réplique longue", "aep": "Réplique de poing",
+                    "gbb": "Réplique de poing", "sniper": "Sniper", "shotgun": "Fusil à pompe", "gear": "Équipement & tenues"}
+
+
+def scrape_airsoftone(pages=1, log=print):
+    out, seen = [], set()
+    for cat in AIRSOFTONE_CATS:
+        try:
+            h = fetch("https://airsoftone.fr/marketplace/annonces" + (f"/{cat}" if cat else ""))
+        except Exception as e:
+            log(f"airsoftone.fr {cat or 'accueil'}: {e}")
+            continue
+        for b in h.split('<li vt-update="auto">')[1:]:
+            b = b.split("</li>", 1)[0]
+            aid = grab(r'/marketplace/annonces/details/([a-z0-9]+)"', b)
+            if not aid or aid in seen:
+                continue
+            seen.add(aid)
+            title = clean(grab(r"<h3[^>]*>.*?<a [^>]*>(.*?)</a>", b))
+            type_title = html.unescape(grab(r'<span title="([^"]+)"><span aria-hidden="true">', b) or "")
+            dept = grab(r'title="Département ([^"]+)"', b) or ""
+            category, motor = classify_listing(type_title, title)
+            if cat in AIRSOFTONE_SLUGS and category in ("Autre", "Réplique longue"):
+                category = AIRSOFTONE_SLUGS[cat]
+            out.append({
+                "id": "a1-" + aid,
+                "source": "airsoftone.fr",
+                "title": title,
+                "price": parse_price(grab(r'class="lit-price-tag">(.*?)</div>', b)),
+                "url": "https://airsoftone.fr/marketplace/annonces/details/" + aid,
+                "image": html.unescape(grab(r'<img src="([^"]*width=420[^"]*)"', b) or "") or None,
+                "region": region_from_postcode(grab(r"\((\w{2,3})\)$", dept)),
+                "location": dept,
+                "category": category,
+                "subcategory": type_title.split(" — ")[0],
+                "motor": motor,
+                "condition": None,
+                "seller": None,
+                "kind": "recherche" if is_wanted(title) else "offre",
+                "date": None,
+                "date_text": "",
+            })
+        time.sleep(DELAY)
+    log(f"airsoftone.fr : {len(out)} annonces (les plus récentes de chaque rubrique)")
+    return out
+
+
+# --- zn-airsoft.fr (rubrique Les occasions, PrestaShop en JSON) --------------
+
+def scrape_zn_airsoft(pages=30, log=print):
+    out, seen = [], set()
+    for p in range(1, pages + 1):
+        req = urllib.request.Request(f"https://zn-airsoft.fr/49-les-occasions?page={p}",
+                                     headers={"User-Agent": UA, "Accept": "application/json", "X-Requested-With": "XMLHttpRequest"})
+        try:
+            with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
+                data = json.loads(r.read())
+        except Exception as e:
+            log(f"zn-airsoft.fr page {p}: {e}")
+            break
+        new = 0
+        for x in data.get("products", []):
+            pid = x.get("id_product")
+            if not pid or pid in seen:
+                continue
+            seen.add(pid)
+            new += 1
+            title = re.sub(r"^Occasion( de la boutique)?\s*-\s*", "", html.unescape(x.get("name", "")))
+            sub = html.unescape(x.get("category_name") or "")
+            category, motor = classify_listing("", title)
+            if category == "Autre" and "quipement" in sub:
+                category = "Équipement & tenues"
+            regular = x.get("regular_price_amount")
+            out.append({
+                "id": f"zn-{pid}",
+                "source": "zn-airsoft.fr",
+                "title": title,
+                "price": x.get("price_amount"),
+                "price_new": regular if x.get("has_discount") and regular else None,
+                "url": x.get("url"),
+                "image": ((x.get("cover") or {}).get("bySize", {}).get("home_default") or {}).get("url"),
+                "region": "Auvergne-Rhône-Alpes",
+                "location": "Boutique ZN Airsoft (Vourles) / en ligne",
+                "category": category,
+                "subcategory": sub,
+                "motor": motor,
+                "condition": "Occasion testée",
+                "seller": "boutique",
+                "kind": "offre",
+                "date": None,
+                "date_text": "",
+            })
+        pages_count = (data.get("pagination") or {}).get("pages_count") or 1
+        log(f"zn-airsoft.fr page {p}/{pages_count}: {new} articles")
+        if not new or p >= pages_count:
+            break
+        time.sleep(DELAY)
+    return out
+
+
 # Nombre maximal de pages lues par site : les collecteurs s'arrêtent d'eux-mêmes à la dernière page.
 # NaturaBuy mélange neuf et occasion sans filtre dans l'adresse : toutes les pages de répliques sont lues,
 # seulement le début des autres rubriques (voir NB_CATS).
@@ -506,6 +656,9 @@ DEFAULT_PAGES = {
     "naturabuy.fr": 300,
     "airsoft-entrepot.fr": 50,
     "ops-store.fr": 20,
+    "peew.fr": 1,
+    "airsoftone.fr": 1,
+    "zn-airsoft.fr": 30,
 }
 
 SOURCES = {
@@ -514,4 +667,7 @@ SOURCES = {
     "naturabuy.fr": scrape_naturabuy,
     "airsoft-entrepot.fr": scrape_airsoft_entrepot,
     "ops-store.fr": scrape_ops_store,
+    "peew.fr": scrape_peew,
+    "airsoftone.fr": scrape_airsoftone,
+    "zn-airsoft.fr": scrape_zn_airsoft,
 }
