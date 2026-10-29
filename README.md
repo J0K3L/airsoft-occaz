@@ -53,11 +53,28 @@ quand même suspendue : onglet Actions → « Mise à jour des annonces » → �
 Liens directs seulement (lecture automatique bloquée, compte requis ou annonces chargées en JavaScript) : Leboncoin, Phénix Airsoft, Airsoft-Occas, JR Soft, France-Airsoft
 (forum Occaz), Vinted, eBay, Facebook Marketplace.
 
+## Comptes (facultatif) : favoris et alertes sur tous les appareils
+
+Sans configuration, le site fonctionne sans connexion (tout reste dans le navigateur de chaque appareil).
+Avec un projet Firebase gratuit, un bouton 👤 permet de se connecter (Google ou e-mail + mot de passe) :
+favoris (avec suivi de prix), alertes et annonces masquées sont alors synchronisés en direct.
+
+1. https://console.firebase.google.com → **Créer un projet** (Google Analytics inutile).
+2. **Authentication → Commencer → Sign-in method** : activer **Google** et **Adresse e-mail/Mot de passe**.
+3. **Authentication → Paramètres → Domaines autorisés** : ajouter `votre-nom.github.io`.
+4. **Firestore Database → Créer une base de données** (emplacement en Europe, mode production),
+   puis onglet **Règles** : coller le contenu de `firestore.rules` → **Publier**.
+5. **Paramètres du projet → Vos applications → Web (</>)** : enregistrer l'app, copier l'objet `firebaseConfig`.
+6. Dans `static/firebase-config.js`, remplacer `null` par cet objet.
+
+Chaque compte ne peut lire et modifier que ses propres données (règles Firestore). À la première connexion
+sur un appareil, ce qui y était enregistré est ajouté au compte ; à la déconnexion, l'appareil est vidé.
+
 ## Alertes
 
 Réglez vos filtres puis touchez **🔔 Créer une alerte**. À chaque visite, le bouton 🔔 indique le nombre de
 nouvelles annonces correspondant à vos alertes ; « Voir » réapplique les filtres de l'alerte.
-Les alertes sont enregistrées dans le navigateur de chaque appareil (pas de notification sur le téléphone).
+Les alertes sont enregistrées dans le navigateur (et dans le compte si vous êtes connecté) ; pas de notification sur le téléphone.
 
 ## Fonctionnement
 

@@ -1,0 +1,14 @@
+rules_version = '2';
+// Règles de sécurité Firestore pour Airsoft Occaz : à coller dans
+// console Firebase → Firestore Database → Règles → Publier.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Chaque compte ne peut lire, modifier et supprimer que son propre document.
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['favs', 'hidden', 'favData', 'favEvents', 'alerts', 'updated', 'device']);
+    }
+    // Tout le reste est interdit.
+  }
+}
