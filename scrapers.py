@@ -12,11 +12,13 @@ import re
 import ssl
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/130.0 Safari/537.36")
-DELAY = 0.5  # pause entre deux pages d'un même site, par politesse
+DELAY = 0.5  # pause entre deux paquets de pages d'un même site, par politesse
+WORKERS = 4  # pages lues en même temps sur un même site (raisonnable pour ces serveurs)
 
 # Le Python de python.org sur macOS n'a pas toujours de certificats : on se rabat sur ceux du système.
 SSL_CTX = ssl.create_default_context()
@@ -44,6 +46,34 @@ def _fetch(url):
         return raw.decode(charset or "utf-8")
     except (LookupError, UnicodeDecodeError):
         return raw.decode("utf-8", errors="replace")
+
+
+def crawl(label, url_for, pages, parse, log):
+    """Lit les pages 1..pages par paquets de WORKERS, dans l'ordre, jusqu'à la première page vide.
+    parse(html) renvoie (annonces, nombre de cartes trouvées) ; 0 carte = fin de la liste."""
+    out = []
+    with ThreadPoolExecutor(WORKERS) as pool:
+        for start in range(1, pages + 1, WORKERS):
+            batch = list(range(start, min(start + WORKERS, pages + 1)))
+            results = list(pool.map(lambda n: _try_fetch(url_for(n)), batch))
+            for n, (h, err) in zip(batch, results):
+                if err:
+                    log(f"{label} page {n}: {err}")
+                    return out
+                items, found = parse(h)
+                if not found:
+                    return out
+                out.extend(items)
+                log(f"{label} page {n}: {len(items)}/{found} annonces")
+            time.sleep(DELAY)
+    return out
+
+
+def _try_fetch(url):
+    try:
+        return fetch(url), None
+    except Exception as e:
+        return None, e
 
 
 def clean(s):
@@ -226,50 +256,44 @@ def is_wanted(title, cat_text=""):
 # --- airsoft-occasion.fr -----------------------------------------------------
 
 def scrape_airsoft_occasion(pages=300, log=print):
+    return crawl("airsoft-occasion.fr", lambda p: f"https://www.airsoft-occasion.fr/annonces?sort=1&type=1&page={p}",
+                 pages, _parse_airsoft_occasion, log)
+
+
+def _parse_airsoft_occasion(h):
     out = []
-    for p in range(1, pages + 1):
-        url = f"https://www.airsoft-occasion.fr/annonces?sort=1&type=1&page={p}"
-        try:
-            h = fetch(url)
-        except Exception as e:
-            log(f"airsoft-occasion.fr page {p}: {e}")
-            break
-        blocks = h.split('class="background-ads-listing-container"')[1:]
-        if not blocks:
-            break
-        for b in blocks:
-            href = grab(r'href="(https://www\.airsoft-occasion\.fr/annonce/[^"]+)"', b)
-            if not href:
-                continue
-            title = clean(grab(r'class="title-listing">(.*?)</p>', b))
-            cat_text = clean(grab(r'class="category-listing">(.*?)</p>', b))
-            loc = clean(grab(r'class="localisation-listing">(.*?)</p>', b))
-            cp = grab(r"\b(\d{5})\b", loc)
-            date_text = clean(grab(r'class="date-listing">(.*?)</span>', b))
-            desc = html.unescape(grab(r'title="([^"]*)"', b) or "")
-            sub = cat_text.split("/", 1)[-1].strip()
-            category, motor = classify_listing(sub, title, desc)
-            out.append({
-                "id": "ao-" + (grab(r"-(\d+)$", href) or href),
-                "source": "airsoft-occasion.fr",
-                "title": title,
-                "price": parse_price(grab(r'class="price-listing">(.*?)</span>\s*</span>', b)),
-                "url": href,
-                "image": grab(r'<img\s+src="([^"]+)"', b),
-                "region": region_from_postcode(cp),
-                "location": loc,
-                "category": category,
-                "subcategory": sub,
-                "motor": motor,
-                "condition": None,
-                "seller": None,
-                "kind": "recherche" if cat_text.lower().startswith("recherche") or is_wanted(title) else "offre",
-                "date": parse_date(date_text),
-                "date_text": date_text.replace("Déposée ", ""),
-            })
-        log(f"airsoft-occasion.fr page {p}: {len(blocks)} annonces")
-        time.sleep(DELAY)
-    return out
+    blocks = h.split('class="background-ads-listing-container"')[1:]
+    for b in blocks:
+        href = grab(r'href="(https://www\.airsoft-occasion\.fr/annonce/[^"]+)"', b)
+        if not href:
+            continue
+        title = clean(grab(r'class="title-listing">(.*?)</p>', b))
+        cat_text = clean(grab(r'class="category-listing">(.*?)</p>', b))
+        loc = clean(grab(r'class="localisation-listing">(.*?)</p>', b))
+        cp = grab(r"\b(\d{5})\b", loc)
+        date_text = clean(grab(r'class="date-listing">(.*?)</span>', b))
+        desc = html.unescape(grab(r'title="([^"]*)"', b) or "")
+        sub = cat_text.split("/", 1)[-1].strip()
+        category, motor = classify_listing(sub, title, desc)
+        out.append({
+            "id": "ao-" + (grab(r"-(\d+)$", href) or href),
+            "source": "airsoft-occasion.fr",
+            "title": title,
+            "price": parse_price(grab(r'class="price-listing">(.*?)</span>\s*</span>', b)),
+            "url": href,
+            "image": grab(r'<img\s+src="([^"]+)"', b),
+            "region": region_from_postcode(cp),
+            "location": loc,
+            "category": category,
+            "subcategory": sub,
+            "motor": motor,
+            "condition": None,
+            "seller": None,
+            "kind": "recherche" if cat_text.lower().startswith("recherche") or is_wanted(title) else "offre",
+            "date": parse_date(date_text),
+            "date_text": date_text.replace("Déposée ", ""),
+        })
+    return out, len(blocks)
 
 
 # --- occasion-airsoft.fr -----------------------------------------------------
@@ -284,56 +308,50 @@ OA_SLUGS = {
 
 
 def scrape_occasion_airsoft(pages=300, log=print):
+    return crawl("occasion-airsoft.fr", lambda p: f"https://occasion-airsoft.fr/?oa_catalogue=all&oa_page={p}",
+                 pages, _parse_occasion_airsoft, log)
+
+
+def _parse_occasion_airsoft(h):
     out = []
-    for p in range(1, pages + 1):
-        url = f"https://occasion-airsoft.fr/?oa_catalogue=all&oa_page={p}"
-        try:
-            h = fetch(url)
-        except Exception as e:
-            log(f"occasion-airsoft.fr page {p}: {e}")
-            break
-        blocks = h.split('<article class="listing-card')[1:]
-        if not blocks:
-            break
-        for b in blocks:
-            href = grab(r'class="card-link" href="([^"]+)"', b)
-            if not href:
-                continue
-            title = clean(grab(r'class="card-title">(.*?)</h2>', b))
-            path = [s for s in href.split("/annnonce/", 1)[-1].split("/") if s]
-            slug_cats = [s for s in path[:-1]]
-            category, motor = classify(" ".join(slug_cats), title)
-            for s in reversed(slug_cats):
-                if s in OA_SLUGS:
-                    category = OA_SLUGS[s]
-                    break
-            if "hpa" in slug_cats:
-                motor = "HPA"
-            meta = grab(r'class="card-meta">(.*?)</p>', b) or ""
-            spans = [clean(s) for s in re.findall(r"<span[^>]*>(.*?)</span>", meta, re.S)]
-            region_txt = spans[0] if spans else ""
-            date_text = clean(grab(r'class="age">(.*?)</span>', meta))
-            out.append({
-                "id": "oa-" + (grab(r'name="post_id" value="(\d+)"', b) or href),
-                "source": "occasion-airsoft.fr",
-                "title": title,
-                "price": parse_price(grab(r'class="card-price">(.*?)</p>', b)),
-                "url": href,
-                "image": grab(r'data-src="([^"]+)"', b) or grab(r'<img[^>]*src="(http[^"]+)"', b),
-                "region": norm_region(region_txt),
-                "location": region_txt,
-                "category": category,
-                "subcategory": slug_cats[-1].replace("-", " ") if slug_cats else "",
-                "motor": motor,
-                "condition": clean(grab(r'class="card-condition">(.*?)</p>', b)) or None,
-                "seller": None,
-                "kind": "recherche" if is_wanted(title) else "offre",
-                "date": parse_date(date_text),
-                "date_text": date_text,
-            })
-        log(f"occasion-airsoft.fr page {p}: {len(blocks)} annonces")
-        time.sleep(DELAY)
-    return out
+    blocks = h.split('<article class="listing-card')[1:]
+    for b in blocks:
+        href = grab(r'class="card-link" href="([^"]+)"', b)
+        if not href:
+            continue
+        title = clean(grab(r'class="card-title">(.*?)</h2>', b))
+        path = [s for s in href.split("/annnonce/", 1)[-1].split("/") if s]
+        slug_cats = [s for s in path[:-1]]
+        category, motor = classify(" ".join(slug_cats), title)
+        for s in reversed(slug_cats):
+            if s in OA_SLUGS:
+                category = OA_SLUGS[s]
+                break
+        if "hpa" in slug_cats:
+            motor = "HPA"
+        meta = grab(r'class="card-meta">(.*?)</p>', b) or ""
+        spans = [clean(s) for s in re.findall(r"<span[^>]*>(.*?)</span>", meta, re.S)]
+        region_txt = spans[0] if spans else ""
+        date_text = clean(grab(r'class="age">(.*?)</span>', meta))
+        out.append({
+            "id": "oa-" + (grab(r'name="post_id" value="(\d+)"', b) or href),
+            "source": "occasion-airsoft.fr",
+            "title": title,
+            "price": parse_price(grab(r'class="card-price">(.*?)</p>', b)),
+            "url": href,
+            "image": grab(r'data-src="([^"]+)"', b) or grab(r'<img[^>]*src="(http[^"]+)"', b),
+            "region": norm_region(region_txt),
+            "location": region_txt,
+            "category": category,
+            "subcategory": slug_cats[-1].replace("-", " ") if slug_cats else "",
+            "motor": motor,
+            "condition": clean(grab(r'class="card-condition">(.*?)</p>', b)) or None,
+            "seller": None,
+            "kind": "recherche" if is_wanted(title) else "offre",
+            "date": parse_date(date_text),
+            "date_text": date_text,
+        })
+    return out, len(blocks)
 
 
 # --- naturabuy.fr (catégorie Airsoft, annonces "occasion" uniquement) --------
@@ -348,56 +366,51 @@ NB_CATS = [  # (url, part des pages lues) : toutes les répliques, le début des
 
 
 def scrape_naturabuy(pages=10, log=print):
-    out, seen = [], set()
+    out = []
     for base, ratio in NB_CATS:
-        for p in range(1, max(1, round(pages * ratio)) + 1):
-            url = base + (f"?PAGE={p}" if p > 1 else "")
-            try:
-                h = fetch(url)
-            except Exception as e:
-                log(f"naturabuy.fr {url}: {e}")
-                break
-            cards = [(grab(r'^([^"]+)"', c), c) for c in re.split(r'<a\s+href="', h)[1:]
-                     if re.match(r'[^"]+-item-\d+\.html"\s+class="itemCard', c)]
-            if not cards:
-                break
-            kept = 0
-            for href, b in cards:
-                b = b.split("</a>", 1)[0]
-                attrs = dict(re.findall(r'data-([\w-]+)="([^"]*)"', b))
-                if attrs.get("dimension4") != "occasion" or attrs.get("id") in seen:
-                    continue
-                seen.add(attrs.get("id"))
-                title = html.unescape(attrs.get("name", ""))
-                sub = html.unescape(attrs.get("category", "")).split("/")[-1]
-                category, motor = classify_listing(sub, title)
-                date_text = clean(grab(r'class="starts-time">(.*?)</div>', b))
-                try:
-                    price = float(attrs.get("price"))
-                except (TypeError, ValueError):  # enchères : prix affiché seulement dans la carte
-                    price = parse_price(grab(r'class="bold[^"]*">\s*([\d\s.,]+)&euro;', b))
-                out.append({
-                    "id": "nb-" + attrs.get("id", href),
-                    "source": "naturabuy.fr",
-                    "title": title,
-                    "price": price,
-                    "url": href if href.startswith("http") else "https://www.naturabuy.fr/" + href,
-                    "image": grab(r'<img[^>]*src="([^"]+)"', b),
-                    "region": None,
-                    "location": "",
-                    "category": category,
-                    "subcategory": sub,
-                    "motor": motor,
-                    "condition": "Occasion",
-                    "seller": attrs.get("dimension6"),
-                    "kind": "offre",
-                    "date": parse_date(date_text),
-                    "date_text": date_text.replace("ajout ", ""),
-                })
-                kept += 1
-            log(f"naturabuy.fr {url.rsplit('/', 1)[-1]}: {kept}/{len(cards)} annonces d'occasion")
-            time.sleep(DELAY)
-    return out
+        name = base.rsplit("/", 1)[-1].split("-cat-")[0]
+        out += crawl(f"naturabuy.fr {name}", lambda p, base=base: base + (f"?PAGE={p}" if p > 1 else ""),
+                     max(1, round(pages * ratio)), _parse_naturabuy, log)
+    # Une annonce peut être vue deux fois quand des pages sont lues en même temps : on garde la première
+    return list({x["id"]: x for x in reversed(out)}.values())[::-1]
+
+
+def _parse_naturabuy(h):
+    out = []
+    cards = [(grab(r'^([^"]+)"', c), c) for c in re.split(r'<a\s+href="', h)[1:]
+             if re.match(r'[^"]+-item-\d+\.html"\s+class="itemCard', c)]
+    for href, b in cards:
+        b = b.split("</a>", 1)[0]
+        attrs = dict(re.findall(r'data-([\w-]+)="([^"]*)"', b))
+        if attrs.get("dimension4") != "occasion":
+            continue
+        title = html.unescape(attrs.get("name", ""))
+        sub = html.unescape(attrs.get("category", "")).split("/")[-1]
+        category, motor = classify_listing(sub, title)
+        date_text = clean(grab(r'class="starts-time">(.*?)</div>', b))
+        try:
+            price = float(attrs.get("price"))
+        except (TypeError, ValueError):  # enchères : prix affiché seulement dans la carte
+            price = parse_price(grab(r'class="bold[^"]*">\s*([\d\s.,]+)&euro;', b))
+        out.append({
+            "id": "nb-" + attrs.get("id", href),
+            "source": "naturabuy.fr",
+            "title": title,
+            "price": price,
+            "url": href if href.startswith("http") else "https://www.naturabuy.fr/" + href,
+            "image": grab(r'<img[^>]*src="([^"]+)"', b),
+            "region": None,
+            "location": "",
+            "category": category,
+            "subcategory": sub,
+            "motor": motor,
+            "condition": "Occasion",
+            "seller": attrs.get("dimension6"),
+            "kind": "offre",
+            "date": parse_date(date_text),
+            "date_text": date_text.replace("ajout ", ""),
+        })
+    return out, len(cards)
 
 
 # --- airsoft-entrepot.fr (rubrique Occasions, Magento) -----------------------
@@ -553,11 +566,11 @@ AIRSOFTONE_SLUGS = {"aeg": "Réplique longue", "gbbr": "Réplique longue", "hpa"
 
 def scrape_airsoftone(pages=1, log=print):
     out, seen = [], set()
-    for cat in AIRSOFTONE_CATS:
-        try:
-            h = fetch("https://airsoftone.fr/marketplace/annonces" + (f"/{cat}" if cat else ""))
-        except Exception as e:
-            log(f"airsoftone.fr {cat or 'accueil'}: {e}")
+    with ThreadPoolExecutor(WORKERS) as pool:
+        pages_html = list(pool.map(lambda c: _try_fetch("https://airsoftone.fr/marketplace/annonces" + (f"/{c}" if c else "")), AIRSOFTONE_CATS))
+    for cat, (h, err) in zip(AIRSOFTONE_CATS, pages_html):
+        if err:
+            log(f"airsoftone.fr {cat or 'accueil'}: {err}")
             continue
         for b in h.split('<li vt-update="auto">')[1:]:
             b = b.split("</li>", 1)[0]
@@ -589,7 +602,6 @@ def scrape_airsoftone(pages=1, log=print):
                 "date": None,
                 "date_text": "",
             })
-        time.sleep(DELAY)
     log(f"airsoftone.fr : {len(out)} annonces (les plus récentes de chaque rubrique)")
     return out
 

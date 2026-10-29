@@ -33,6 +33,20 @@ sans Mac allumé ni compte Claude.
    (Safari → Partager → Sur l'écran d'accueil).
 
 Le bouton « Actualiser » est masqué en ligne : les annonces se mettent à jour toutes seules.
+
+#### Mise à jour vraiment horaire (cron-job.org)
+
+GitHub retarde ou saute souvent ses tâches planifiées sur les comptes gratuits : sa propre planification
+ne sert que de secours (toutes les 2 heures). Le rythme horaire vient de cron-job.org, qui demande à GitHub
+de lancer la mise à jour :
+
+1. GitHub → photo → **Settings → Developer settings → Personal access tokens → Fine-grained tokens →
+   Generate new token** : accès au seul dépôt `airsoft-occaz`, permission **Actions : Read and write**.
+2. cron-job.org → **Create cronjob** : URL
+   `https://api.github.com/repos/<compte>/airsoft-occaz/actions/workflows/update.yml/dispatches`,
+   toutes les heures ; onglet **Advanced** : méthode **POST**, en-têtes `Authorization: Bearer <clé>`,
+   `Accept: application/vnd.github+json`, corps `{"ref":"main"}`. Un « Test run » doit répondre **204**.
+3. Quand la clé expire, cron-job.org signale des erreurs 401 : en créer une nouvelle et la remplacer.
 GitHub suspend les tâches planifiées d'un dépôt public resté 60 jours sans modification. Pour l'éviter,
 la mise à jour écrit la date dans `maintenance.txt` une fois par mois (début du mois). Si elle était
 quand même suspendue : onglet Actions → « Mise à jour des annonces » → « Enable workflow ».
