@@ -1,4 +1,6 @@
 # Collecte les annonces toutes les heures et publie le site sur GitHub Pages.
+# Une fois par mois (début du mois), enregistre la date dans maintenance.txt : GitHub met en pause les tâches
+# planifiées d'un dépôt public resté 60 jours sans modification.
 name: Mise à jour des annonces
 
 on:
@@ -9,7 +11,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write  # uniquement pour la modification mensuelle de maintenance.txt
   pages: write
   id-token: write
 
@@ -32,6 +34,18 @@ jobs:
           curl -sf "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/annonces.json" -o site/annonces.json || rm -f site/annonces.json
       - name: Collecter les annonces
         run: python3 build_static.py
+      - name: Garder la mise à jour active (une fois par mois)
+        if: github.event_name == 'schedule'
+        run: |
+          # Premier passage des 7 premiers jours du mois, si ce mois-ci n'est pas encore fait
+          if [ "$(date -u +%-d)" -le 7 ] && ! grep -qs "$(date -u +%Y-%m)" maintenance.txt; then
+            date -u +"Dernière maintenance automatique : %Y-%m-%d %H:%M UTC" > maintenance.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add maintenance.txt
+            git commit -m "Maintenance mensuelle (évite la mise en pause automatique)"
+            git push || echo "Maintenance non enregistrée, nouvel essai au prochain passage"
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
