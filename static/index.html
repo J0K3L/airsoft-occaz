@@ -117,6 +117,19 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
 .fav-news > b { display: block; margin-bottom: 4px; }
 .fav-news div { padding: 2px 0; }
 .hist { font-size: 12px; color: var(--muted); }
+
+/* Compte */
+#accountBtn .av { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 700; vertical-align: middle; }
+.acc-form { display: grid; gap: 8px; margin-top: 8px; }
+.acc-form input { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); width: 100%; }
+.acc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 11px; font-weight: 600; }
+.or { text-align: center; color: var(--muted); font-size: 13px; margin: 14px 0 4px; }
+.acc-msg { font-size: 13px; min-height: 1.2em; }
+.acc-msg.err { color: var(--bad); }
+.acc-msg.ok { color: var(--good); }
+.sync { font-size: 13px; color: var(--muted); }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
 .actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
 .icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #333; cursor: pointer;
   display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
@@ -204,6 +217,7 @@ body.fav-mode .layout { display: none; }
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="q" type="search" placeholder="Rechercher : M4, Tokyo Marui, HPA, gilet JPC…" autocomplete="off">
   </label>
+  <button class="btn" id="accountBtn" title="Mon compte" hidden>👤 Connexion</button>
   <button class="btn" id="alertsBtn" title="Mes alertes">🔔<span class="n" id="alertCount"></span></button>
   <button class="btn" id="favBtn" title="Mes favoris">♥ Favoris <span class="n" id="favCount"></span><span id="favDot"></span></button>
   <button class="btn" id="filtersToggle">Filtres</button>
@@ -311,6 +325,31 @@ body.fav-mode .layout { display: none; }
   </div>
 </div>
 
+<div class="sheet-bg" id="accountSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+    <div class="sheet-top"><h2 id="accTitle">Mon compte</h2><button class="btn" id="accClose">Fermer</button></div>
+    <div id="accOut">
+      <p>Connectez-vous pour retrouver vos favoris (avec leur suivi de prix), vos alertes et vos annonces masquées sur tous vos appareils. Ceux déjà enregistrés sur cet appareil sont ajoutés à votre compte.</p>
+      <button class="btn google" id="accGoogle"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Continuer avec Google</button>
+      <div class="or">ou avec une adresse e-mail</div>
+      <form class="acc-form" id="accForm">
+        <input id="accEmail" type="email" autocomplete="email" placeholder="Adresse e-mail" required>
+        <input id="accPass" type="password" autocomplete="current-password" placeholder="Mot de passe (6 caractères minimum)" minlength="6" required>
+        <div class="acc-actions"><button class="btn primary" type="submit" id="accLogin">Se connecter</button><button class="btn" type="button" id="accSignup">Créer un compte</button><button class="linkbtn" type="button" id="accReset">Mot de passe oublié ?</button></div>
+      </form>
+      <div class="acc-msg" id="accMsg"></div>
+    </div>
+    <div id="accIn" hidden>
+      <p>Connecté : <b id="accWho"></b></p>
+      <p class="sync" id="accSync"></p>
+      <div class="acc-actions" style="margin-top:12px"><button class="btn" id="accLogout">Se déconnecter</button><button class="btn danger" id="accDelete">Supprimer mon compte</button></div>
+      <div class="acc-msg" id="accMsg2"></div>
+      <p style="margin-top:14px">À la déconnexion, vos favoris, alertes et annonces masquées sont retirés de cet appareil ; ils restent dans votre compte.</p>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
 <script>
 const PAGE = matchMedia("(max-width: 600px)").matches ? 24 : 48;  // moins de cartes d'un coup sur téléphone
 const AGES = [["", "Toutes"], ["1", "24 h"], ["3", "3 jours"], ["7", "7 jours"], ["30", "30 jours"]];
@@ -796,15 +835,15 @@ $("alertSheet").addEventListener("click", (e) => {
     if (pos) { myPos = pos; store.set("ao-pos", pos); }
     F = Object.assign(defaults(), { sort: F.sort, view: F.view }, crit);
     F.sort = "new";
-    a.seen = new Date().toISOString(); store.set("ao-alerts", alertsList);
+    a.seen = new Date().toISOString(); saveAlerts();
     closeAlerts(); if (favMode) setFavMode(false); render();
   } else if (d) {
-    alertsList.splice(+d.dataset.alertDel, 1); store.set("ao-alerts", alertsList); renderAlerts(); updateAlertCount();
+    alertsList.splice(+d.dataset.alertDel, 1); saveAlerts(); renderAlerts(); updateAlertCount();
   }
 });
 $("alertAdd").onclick = () => {
   alertsList.push({ name: $("alertName").value.trim() || critText(currentCrit()), crit: currentCrit(), seen: new Date().toISOString() });
-  store.set("ao-alerts", alertsList); $("alertNew").hidden = true; renderAlerts(); updateAlertCount();
+  saveAlerts(); $("alertNew").hidden = true; renderAlerts(); updateAlertCount();
 };
 $("moreBrands").onclick = () => { showAllBrands = !showAllBrands; renderFacets(); };
 async function setPosFromCp(cp) {
@@ -861,41 +900,182 @@ document.addEventListener("click", (e) => {
   render();
 });
 
-// Sur claude.ai : favoris et annonces masquées suivent le compte (Mac ↔ iPhone)
-let prefsRef = null, prefsTimer, prefsWriting = Promise.resolve();
+// --- Compte (Firebase) : favoris, alertes et annonces masquées sur tous les appareils ---------
+// Actif seulement si firebase-config.js est rempli. Le navigateur garde une copie locale (hors ligne).
+const FB_VERSION = "10.12.2";
+const DEVICE = store.get("ao-device", null) || (() => { const d = crypto.randomUUID?.() || String(Math.random()).slice(2); store.set("ao-device", d); return d; })();
+let fb = null, account = null, userRef = null, unsubUser = null, pushTimer = null, applyingRemote = false;
+
+function prefsBody() {
+  return { favs: [...favs], hidden: [...hidden], favData, favEvents, alerts: alertsList, updated: new Date().toISOString(), device: DEVICE };
+}
 function savePrefs() {
   store.set("ao-favs", [...favs]); store.set("ao-hidden", [...hidden]); store.set("ao-favdata", favData); store.set("ao-favevents", favEvents);
   updateFavCount();
-  if (!prefsRef) return;
-  clearTimeout(prefsTimer);
-  prefsTimer = setTimeout(() => {
-    const body = { favs: [...favs], hidden: [...hidden], favData };
-    prefsWriting = prefsWriting.then(() => prefsRef.set(body)).catch(() => {});
+  if (!userRef || applyingRemote) return;
+  clearTimeout(pushTimer);
+  setSync("pending");
+  pushTimer = setTimeout(() => {
+    pushTimer = null;
+    userRef.set(prefsBody()).then(() => setSync("ok")).catch(() => setSync("err"));
   }, 800);
 }
-(async () => {
-  if (!window.claude?.use) return;
-  const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
-  const uid = await user?.id();
-  if (!db || !uid) return;
-  const ref = db.doc(`data/users/${uid}/prefs`);
-  const snap = await ref.get().catch(() => null);
-  if (!snap) return;
-  prefsRef = ref;
-  if (snap.exists) {
-    const p = snap.data();
-    favs = new Set([...(p.favs || []), ...favs]); hidden = new Set([...(p.hidden || []), ...hidden]);
-    favData = { ...(p.favData || {}), ...favData };
-    if (favs.size !== (p.favs || []).length || hidden.size !== (p.hidden || []).length) savePrefs();
-    render(false);
-  } else if (favs.size || hidden.size) savePrefs();
-  ref.onSnapshot((s) => {
-    if (!s.exists || s.metadata.hasPendingWrites) return;
-    const p = s.data();
-    favs = new Set(p.favs || []); hidden = new Set(p.hidden || []); favData = p.favData || favData;
-    favMode ? renderFavs() : render(false);
-  }, () => {});
-})();
+function saveAlerts() { store.set("ao-alerts", alertsList); savePrefs(); }
+function refreshAll() { favMode ? renderFavs() : render(false); updateFavCount(); updateAlertCount(); if (!$("alertSheet").hidden) renderAlerts(); }
+
+// Première connexion sur un appareil : on additionne ce qui est sur l'appareil et dans le compte
+function mergePrefs(r) {
+  favs = new Set([...(r.favs || []), ...favs]);
+  hidden = new Set([...(r.hidden || []), ...hidden]);
+  for (const [id, f] of Object.entries(r.favData || {})) {
+    const l = favData[id];
+    if (!l) { favData[id] = f; continue; }
+    const first = (f.added || "") <= (l.added || "") ? f : l;  // le plus ancien ajout garde le prix d'origine
+    favData[id] = { ...f, ...l, added: first.added, price_added: first.price_added,
+      history: (f.history?.length || 0) >= (l.history?.length || 0) ? f.history : l.history };
+  }
+  const evKey = (e) => e.id + e.t + e.type, have = new Set(favEvents.map(evKey));
+  favEvents = [...favEvents, ...(r.favEvents || []).filter((e) => !have.has(evKey(e)))].sort((a, b) => b.t.localeCompare(a.t)).slice(0, 100);
+  const aKey = (x) => x.name + JSON.stringify(x.crit), names = new Set(alertsList.map(aKey));
+  alertsList = [...alertsList, ...(r.alerts || []).filter((x) => !names.has(aKey(x)))];
+}
+// Changement fait sur un autre appareil : le compte fait foi
+function applyRemote(r) {
+  applyingRemote = true;
+  favs = new Set(r.favs || []); hidden = new Set(r.hidden || []); favData = r.favData || {};
+  favEvents = r.favEvents || []; alertsList = r.alerts || [];
+  saveAlerts();
+  applyingRemote = false;
+  refreshAll(); setSync("ok");
+}
+function clearLocal() {
+  favs = new Set(); hidden = new Set(); favData = {}; favEvents = []; alertsList = [];
+  saveAlerts(); refreshAll();
+}
+
+let syncState = "";
+function setSync(state) {
+  syncState = state;
+  const txt = { ok: "✓ Synchronisé", pending: "Synchronisation…", err: "⚠️ Synchronisation impossible pour l'instant (hors ligne ?) : les changements sont gardés sur cet appareil." }[state] || "";
+  $("accSync").textContent = txt;
+}
+function renderAccount() {
+  const on = !!account;
+  $("accOut").hidden = on; $("accIn").hidden = !on;
+  const name = account?.displayName || account?.email || "";
+  $("accWho").textContent = account?.email || name;
+  $("accountBtn").innerHTML = on ? `<span class="av">${esc((name[0] || "?").toUpperCase())}</span>` : "👤 Connexion";
+  $("accountBtn").title = on ? `Connecté : ${name}` : "Se connecter pour synchroniser favoris et alertes";
+}
+const AUTH_ERRORS = {
+  "auth/invalid-email": "Adresse e-mail invalide.",
+  "auth/invalid-credential": "E-mail ou mot de passe incorrect.",
+  "auth/wrong-password": "E-mail ou mot de passe incorrect.",
+  "auth/user-not-found": "Aucun compte avec cette adresse : touchez « Créer un compte ».",
+  "auth/email-already-in-use": "Un compte existe déjà avec cette adresse : touchez « Se connecter ».",
+  "auth/weak-password": "Mot de passe trop court (6 caractères minimum).",
+  "auth/too-many-requests": "Trop d'essais : patientez quelques minutes.",
+  "auth/network-request-failed": "Pas de connexion Internet.",
+  "auth/popup-closed-by-user": "Fenêtre Google fermée avant la fin.",
+  "auth/unauthorized-domain": "Ce site n'est pas encore autorisé dans Firebase (Authentication → Paramètres → Domaines autorisés).",
+  "auth/operation-not-allowed": "Ce mode de connexion n'est pas activé dans Firebase.",
+  "auth/requires-recent-login": "Par sécurité, déconnectez-vous puis reconnectez-vous avant de supprimer le compte.",
+};
+function accMsg(text, kind = "err", el = "accMsg") { $(el).textContent = text; $(el).className = `acc-msg ${kind}`; }
+const authError = (e) => AUTH_ERRORS[e?.code]
+  || (String(e?.code).startsWith("auth/api-key-not-valid") ? "Configuration Firebase invalide : vérifiez firebase-config.js." : `Erreur : ${e?.message || e}`);
+
+function loadScript(src) {
+  return new Promise((ok, ko) => { const t = document.createElement("script"); t.src = src; t.onload = ok; t.onerror = ko; document.head.appendChild(t); });
+}
+async function initAccount() {
+  const cfg = window.FIREBASE_CONFIG;
+  if (!cfg?.apiKey) return;  // comptes non configurés : le site fonctionne sans connexion
+  $("accountBtn").hidden = false;
+  try {
+    for (const m of ["app", "auth", "firestore"]) await loadScript(`https://www.gstatic.com/firebasejs/${FB_VERSION}/firebase-${m}-compat.js`);
+    firebase.initializeApp(cfg);
+    fb = { auth: firebase.auth(), db: firebase.firestore() };
+    fb.auth.useDeviceLanguage();
+    await fb.auth.getRedirectResult().catch((e) => accMsg(authError(e)));
+    fb.auth.onAuthStateChanged(onUser);
+  } catch { $("accountBtn").title = "Connexion indisponible (hors ligne ?)"; }
+}
+async function onUser(u) {
+  unsubUser?.(); unsubUser = null; userRef = null; account = u;
+  renderAccount();
+  if (!u) return;
+  const ref = fb.db.collection("users").doc(u.uid);
+  try {
+    setSync("pending");
+    const snap = await ref.get();
+    if (snap.exists) mergePrefs(snap.data());
+    await ref.set(prefsBody());
+    userRef = ref;
+    saveAlerts(); refreshAll(); setSync("ok");
+    unsubUser = ref.onSnapshot((d) => {
+      if (!d.exists || d.metadata.hasPendingWrites || pushTimer) return;  // nos propres envois, ou un envoi en attente
+      const r = d.data();
+      if (r.device === DEVICE) return;
+      applyRemote(r);
+    }, () => setSync("err"));
+  } catch { setSync("err"); }
+}
+
+function openAccount() { accMsg("", "", "accMsg"); accMsg("", "", "accMsg2"); renderAccount(); $("accountSheet").hidden = false; document.body.style.overflow = "hidden"; }
+function closeAccount() { $("accountSheet").hidden = true; document.body.style.overflow = ""; }
+$("accountBtn").onclick = openAccount;
+$("accClose").onclick = closeAccount;
+$("accountSheet").addEventListener("click", (e) => { if (e.target === $("accountSheet")) closeAccount(); });
+$("accGoogle").onclick = async () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try { await fb.auth.signInWithPopup(provider); closeAccount(); }
+  catch (e) {
+    // Fenêtre bloquée (fréquent dans une app installée sur l'écran d'accueil) : connexion par redirection
+    if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment", "auth/cancelled-popup-request"].includes(e.code)) fb.auth.signInWithRedirect(provider);
+    else accMsg(authError(e));
+  }
+};
+$("accForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try { await fb.auth.signInWithEmailAndPassword($("accEmail").value.trim(), $("accPass").value); closeAccount(); }
+  catch (err) { accMsg(authError(err)); }
+});
+$("accSignup").onclick = async () => {
+  if (!$("accForm").reportValidity()) return;
+  try { await fb.auth.createUserWithEmailAndPassword($("accEmail").value.trim(), $("accPass").value); closeAccount(); }
+  catch (err) { accMsg(authError(err)); }
+};
+$("accReset").onclick = async () => {
+  const email = $("accEmail").value.trim();
+  if (!email) return accMsg("Indiquez d'abord votre adresse e-mail.");
+  try { await fb.auth.sendPasswordResetEmail(email); accMsg("E-mail envoyé : suivez le lien pour choisir un nouveau mot de passe.", "ok"); }
+  catch (err) { accMsg(authError(err)); }
+};
+$("accLogout").onclick = async () => {
+  clearTimeout(pushTimer);
+  if (pushTimer && userRef) await userRef.set(prefsBody()).catch(() => {});  // envoie les derniers changements
+  pushTimer = null;
+  unsubUser?.(); unsubUser = null; userRef = null;
+  await fb.auth.signOut();
+  clearLocal(); closeAccount();
+};
+$("accDelete").onclick = async () => {
+  if (!confirm("Supprimer définitivement votre compte, vos favoris, vos alertes et vos annonces masquées ?")) return;
+  const u = fb.auth.currentUser, ref = fb.db.collection("users").doc(u.uid);
+  unsubUser?.(); unsubUser = null; clearTimeout(pushTimer); pushTimer = null;
+  try {
+    await ref.delete();  // les données d'abord : après la suppression du compte, plus le droit d'y toucher
+    userRef = null;
+    await u.delete();
+    clearLocal(); closeAccount();
+  } catch (err) {
+    // Suppression refusée (connexion trop ancienne) : on remet les données en place
+    userRef = ref; await ref.set(prefsBody()).catch(() => {}); onUser(u);
+    accMsg(authError(err), "err", "accMsg2");
+  }
+};
+initAccount();
 
 if (location.hash === "#favoris") setFavMode(true);
 updateFavCount();
