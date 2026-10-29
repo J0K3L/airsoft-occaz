@@ -13,18 +13,19 @@
 <style>
 :root {
   --bg: #f4f3ef; --panel: #ffffff; --ink: #1d1f1b; --muted: #6b6f66; --line: #e2e0d9;
-  --accent: #556b2f; --accent-ink: #fff; --accent-soft: #e7ecdc; --warn: #b45309; --fav: #c2410c;
+  --accent: #556b2f; --accent-ink: #fff; --accent-soft: #e7ecdc; --warn: #b45309; --fav: #c2410c; --good: #15803d; --bad: #b91c1c;
   --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --bg: #141612; --panel: #1d201b; --ink: #ecede8; --muted: #9a9e93; --line: #2f332c;
-    --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c;
+    --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c; --good: #4ade80; --bad: #f87171;
     --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
 }
 :root[data-theme="dark"] { --bg: #141612; --panel: #1d201b; --ink: #ecede8; --muted: #9a9e93; --line: #2f332c;
-  --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c;
+  --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c; --good: #4ade80; --bad: #f87171;
   --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
 a { color: inherit; }
 button, input, select { font: inherit; color: inherit; }
@@ -88,6 +89,34 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
 .tag.src { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 500; }
 .tag.new { background: var(--warn); color: #fff; }
 .tag.want { background: #7c3aed22; color: #7c3aed; }
+.tag.deal { background: var(--good); color: var(--panel); }
+.also { font-size: 12px; color: var(--muted); padding: 0 12px 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.also a { color: var(--accent); text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.pos { font-size: 12px; color: var(--muted); margin: 6px 0; }
+.pos b { color: var(--ink); font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--fav); vertical-align: middle; margin-left: 4px; }
+.card { content-visibility: auto; contain-intrinsic-size: 220px 330px; }
+
+/* Panneau alertes */
+.sheet-bg { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; overflow: auto;
+  padding: max(24px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+.sheet { background: var(--panel); color: var(--ink); border-radius: 16px; width: min(640px, 100%); padding: 18px 18px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.sheet h2 { margin: 0 0 4px; font-size: 20px; }
+.sheet h3 { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.sheet p { margin: 6px 0; font-size: 14px; color: var(--muted); }
+.sheet-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.alert-row { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin-bottom: 8px; }
+.alert-row b { font-size: 15px; }
+.alert-row small { color: var(--muted); grid-column: 1; }
+.alert-row .acts { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 6px; align-items: center; }
+.alert-new { color: var(--fav); font-weight: 700; }
+.field { display: flex; gap: 8px; flex-wrap: wrap; }
+.field input { flex: 1 1 200px; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.note { font-size: 13px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); }
+.fav-news { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; font-size: 14px; }
+.fav-news > b { display: block; margin-bottom: 4px; }
+.fav-news div { padding: 2px 0; }
+.hist { font-size: 12px; color: var(--muted); }
 .actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
 .icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #333; cursor: pointer;
   display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
@@ -116,7 +145,38 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
 .others a:hover { text-decoration: underline; }
 .others p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
 
+/* Page favoris */
+body.fav-mode .layout { display: none; }
+.favpage { max-width: 1100px; margin: 0 auto; padding-block: 20px 40px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.fav-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.fav-head h1 { font-size: 22px; margin: 0 auto 0 0; letter-spacing: -.01em; }
+.fav-head select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.fav-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.card.gone { opacity: .6; }
+.card.gone .thumb img { filter: grayscale(1); }
+.delta { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 1px 6px; }
+.delta.down { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.delta.up { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.tag.gone { background: var(--muted); color: var(--panel); }
+.fav-empty { text-align: center; padding: 60px 20px; color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 14px; }
+.fav-foot { display: flex; justify-content: center; margin-top: 18px; }
+#favBtn .n { font-variant-numeric: tabular-nums; color: var(--fav); font-weight: 700; }
+
+/* Téléphones (iPhone et Android) */
+@media (hover: none) {
+  .icon-btn { width: 38px; height: 38px; }
+  .icon-btn.hide { opacity: .85; }
+  .card:hover { transform: none; }
+  .check { padding: 6px 0; }
+  .chip { padding: 6px 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
 @media (max-width: 860px) {
+  input, select, textarea { font-size: 16px !important; } /* évite le zoom automatique d'iOS */
   header { padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .brand small { display: none; }
   .search { order: 5; flex-basis: 100%; }
@@ -127,7 +187,15 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
   #closeFilters { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 16px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
   .grid.list .thumb { width: 110px; }
+  .toolbar { gap: 8px; }
+  .toolbar select { flex: 1 1 auto; min-width: 0; }
+  .card { contain-intrinsic-size: 160px 300px; }
+  .body { padding: 8px 10px 10px; }
+  .price { font-size: 16px; }
+  .title { font-size: 13px; }
+  .fav-head h1 { width: 100%; order: -1; }
 }
+@media (max-width: 380px) { .grid { grid-template-columns: 1fr 1fr; gap: 8px; } }
 @media (min-width: 861px) { #closeFilters { display: none; } }
 </style>
 <header>
@@ -136,6 +204,8 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input id="q" type="search" placeholder="Rechercher : M4, Tokyo Marui, HPA, gilet JPC…" autocomplete="off">
   </label>
+  <button class="btn" id="alertsBtn" title="Mes alertes">🔔<span class="n" id="alertCount"></span></button>
+  <button class="btn" id="favBtn" title="Mes favoris">♥ Favoris <span class="n" id="favCount"></span><span id="favDot"></span></button>
   <button class="btn" id="filtersToggle">Filtres</button>
   <span class="status" id="status"></span>
   <button class="btn primary" id="refresh">Actualiser</button>
@@ -149,14 +219,22 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
     </div>
     <div class="fgroup"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">Site</h3><button class="linkbtn" id="allSources">Tous</button></div><div id="f-source"></div></div>
     <div class="fgroup"><h3>Catégorie</h3><div id="f-category"></div></div>
+    <div class="fgroup"><h3>Marque</h3><div id="f-brand"></div><button class="linkbtn" id="moreBrands"></button></div>
     <div class="fgroup"><h3>Motorisation</h3><div class="chips" id="f-motor"></div></div>
     <div class="fgroup"><h3>Prix (€)</h3>
       <div class="row2"><input id="pmin" type="number" min="0" placeholder="Min"><input id="pmax" type="number" min="0" placeholder="Max"></div>
+    </div>
+    <div class="fgroup"><h3>Distance</h3>
+      <div class="row2"><input id="cp" inputmode="numeric" maxlength="5" placeholder="Code postal" autocomplete="postal-code"><button class="btn" id="locate" title="Utiliser ma position">📍</button></div>
+      <div class="pos" id="posLabel"></div>
+      <div class="chips" id="f-dist"></div>
     </div>
     <div class="fgroup"><h3>Région</h3><select id="f-region"><option value="">Toute la France</option></select></div>
     <div class="fgroup"><h3>Publiée</h3><div class="chips" id="f-age"></div></div>
     <div class="fgroup"><h3>Vendeur</h3><div class="chips" id="f-seller"></div></div>
     <div class="fgroup"><h3>Options</h3>
+      <label class="check"><input type="checkbox" id="o-deals"> Bonnes affaires uniquement</label>
+      <label class="check"><input type="checkbox" id="o-group"> Regrouper les doublons entre sites</label>
       <label class="check"><input type="checkbox" id="o-photo"> Avec photo uniquement</label>
       <label class="check"><input type="checkbox" id="o-price"> Avec prix uniquement</label>
       <label class="check"><input type="checkbox" id="o-want"> Inclure les « recherche »</label>
@@ -170,6 +248,8 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
       <a href="https://www.facebook.com/marketplace/search/?query=airsoft" target="_blank" rel="noopener">Facebook Marketplace ↗</a>
       <a href="https://www.phenixairsoft.com/" target="_blank" rel="noopener">Phénix Airsoft ↗</a>
       <a href="https://www.leboncoin.fr/recherche?text=airsoft" target="_blank" rel="noopener">Leboncoin — airsoft ↗</a>
+      <a href="https://www.airsoft-occas.fr/" target="_blank" rel="noopener">Airsoft-Occas ↗</a>
+      <a href="https://jrsoft.fr/11-occasions" target="_blank" rel="noopener">JR Soft — occasions ↗</a>
       <p>Ces sites bloquent la lecture automatique ou demandent un compte, donc leurs annonces n'apparaissent pas ici.</p>
     </div>
   </aside>
@@ -180,11 +260,14 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
       <select id="sort" aria-label="Trier">
         <option value="recent">Plus récentes</option>
         <option value="new">Nouveautés (vues en premier)</option>
+        <option value="deal">Meilleures affaires</option>
+        <option value="near">Plus proches</option>
         <option value="price-asc">Prix croissant</option>
         <option value="price-desc">Prix décroissant</option>
         <option value="site">Par site</option>
         <option value="title">Titre A → Z</option>
       </select>
+      <button class="btn" id="alertFromFilters" title="Être prévenu des nouvelles annonces avec ces filtres">🔔 Créer une alerte</button>
       <div class="seg" role="group" aria-label="Affichage">
         <button id="v-grid" class="on" title="Grille">▦</button><button id="v-list" title="Liste">☰</button>
       </div>
@@ -196,8 +279,40 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
   </main>
 </div>
 
+<section class="favpage" id="favPage" hidden>
+  <div class="fav-head">
+    <button class="btn" id="favBack">← Toutes les annonces</button>
+    <h1>Mes favoris</h1>
+    <select id="favSort" aria-label="Trier les favoris">
+      <option value="added">Ajoutés récemment</option>
+      <option value="price-asc">Prix croissant</option>
+      <option value="price-desc">Prix décroissant</option>
+      <option value="drop">Plus grosses baisses</option>
+      <option value="site">Par site</option>
+    </select>
+  </div>
+  <div class="fav-news" id="favNews" hidden></div>
+  <div class="fav-stats" id="favStats"></div>
+  <div class="grid" id="favGrid"></div>
+  <div class="fav-foot"><button class="btn" id="favClean" hidden>Retirer les annonces qui ne sont plus en ligne</button></div>
+</section>
+
+<div class="sheet-bg" id="alertSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="alertTitle">
+    <div class="sheet-top"><h2 id="alertTitle">Mes alertes</h2><button class="btn" id="alertClose">Fermer</button></div>
+    <p>Une alerte retient vos filtres actuels. À chaque visite, le 🔔 compte les nouvelles annonces qui y correspondent. Les alertes sont enregistrées sur cet appareil uniquement.</p>
+    <div id="alertNew" hidden>
+      <h3>Nouvelle alerte avec les filtres actuels</h3>
+      <div class="note" id="alertCrit"></div>
+      <div class="field" style="margin-top:8px"><input id="alertName" placeholder="Nom de l'alerte (ex. MWS pas chère)"><button class="btn primary" id="alertAdd">Enregistrer</button></div>
+    </div>
+    <h3>Alertes enregistrées</h3>
+    <div id="alertList"></div>
+  </div>
+</div>
+
 <script>
-const PAGE = 48;
+const PAGE = matchMedia("(max-width: 600px)").matches ? 24 : 48;  // moins de cartes d'un coup sur téléphone
 const AGES = [["", "Toutes"], ["1", "24 h"], ["3", "3 jours"], ["7", "7 jours"], ["30", "30 jours"]];
 const MOTORS = ["AEG", "GBB", "HPA", "Gaz", "CO2", "Spring", "AEP"];
 const store = {
@@ -207,11 +322,65 @@ const store = {
 const SELLERS = [["particulier", "Particuliers"], ["boutique", "Boutiques"]];
 // Boutiques = zones occasion des magasins (Airsoft Entrepôt, OPS) et pros de NaturaBuy
 const sellerOf = (x) => /^(boutique|pro)/.test(x.seller || "") ? "boutique" : "particulier";
-const defaults = () => ({ q: "", category: [], motor: [], source: [], seller: "", region: "", age: "", pmin: "", pmax: "",
-  photo: false, price: false, want: false, fav: false, hidden: false, sort: "recent", view: "grid" });
+const defaults = () => ({ q: "", category: [], motor: [], source: [], brand: [], seller: "", region: "", age: "", pmin: "", pmax: "",
+  dist: "", deals: false, group: true, photo: false, price: false, want: false, fav: false, hidden: false, sort: "recent", view: "grid" });
+const DISTANCES = ["", "25", "50", "100", "200"];
+// Position de l'utilisateur pour le filtre par distance (code postal ou géolocalisation)
+let myPos = store.get("ao-pos", null);
+function kmTo(geo) {
+  if (!myPos || !geo) return null;
+  const r = Math.PI / 180, [la, lo] = geo;
+  const h = Math.sin((la - myPos.lat) * r / 2) ** 2 + Math.cos(myPos.lat * r) * Math.cos(la * r) * Math.sin((lo - myPos.lon) * r / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
 let F = Object.assign(defaults(), store.get("ao-filters", {}));
 let favs = new Set(store.get("ao-favs", []));
 let hidden = new Set(store.get("ao-hidden", []));
+// Copie de chaque favori (titre, prix à l'ajout, photo…) : il reste visible même retiré du site
+let favData = store.get("ao-favdata", {});
+const FAV_FIELDS = ["title", "price", "image", "url", "source", "region", "location", "category", "motor", "condition"];
+function snapshot(x, prev) {
+  const s = prev ? { ...prev } : { id: x.id, added: new Date().toISOString(), price_added: x.price ?? null };
+  for (const k of FAV_FIELDS) s[k] = x[k] ?? null;
+  return s;
+}
+function toggleFav(id) {
+  if (favs.has(id)) { favs.delete(id); delete favData[id]; }
+  else {
+    favs.add(id);
+    const x = byId.get(id);
+    favData[id] = x ? snapshot(x) : { id, added: new Date().toISOString(), title: "Annonce", price_added: null };
+  }
+  savePrefs();
+}
+// Journal des changements sur les favoris (baisse, hausse, vendu, remis en ligne), pour « depuis votre dernière visite »
+let favEvents = store.get("ao-favevents", []);
+let favSeen = store.get("ao-favseen", new Date().toISOString());
+function favEvent(f, type, from, to) {
+  favEvents.unshift({ id: f.id, title: f.title, t: new Date().toISOString(), type, from, to });
+  favEvents = favEvents.slice(0, 100);
+}
+// Met à jour les copies avec les données du jour (prix actuel, photo…) sans toucher au prix d'origine
+function refreshFavData() {
+  let changed = false;
+  for (const id of favs) {
+    const x = byId.get(id), prev = favData[id];
+    if (!x) {  // plus dans la liste : vendue ou retirée
+      if (prev && !prev.gone_at) { prev.gone_at = new Date().toISOString(); favEvent(prev, "gone"); changed = true; }
+      continue;
+    }
+    const next = snapshot(x, prev);
+    if (prev?.gone_at) { delete next.gone_at; favEvent(next, "back"); }
+    if (prev && prev.price != null && x.price != null && x.price !== prev.price) {
+      next.history = [...(prev.history || [{ d: prev.added, p: prev.price_added ?? prev.price }]), { d: new Date().toISOString(), p: x.price }].slice(-20);
+      favEvent(next, x.price < prev.price ? "down" : "up", prev.price, x.price);
+    }
+    if (JSON.stringify(next) !== JSON.stringify(prev)) { favData[id] = next; changed = true; }
+  }
+  for (const id of Object.keys(favData)) if (!favs.has(id)) { delete favData[id]; changed = true; }
+  if (changed) savePrefs();
+}
+let byId = new Map(), showAllBrands = false;
 let all = [], page = 1, updated = null;
 
 const $ = (id) => document.getElementById(id);
@@ -230,29 +399,35 @@ function ago(iso) {
 
 function save() { store.set("ao-filters", F); }
 
-// Filtrage : `skip` permet de calculer les compteurs d'une facette sans son propre filtre
-function matches(x, skip) {
-  if (!F.hidden && hidden.has(x.id)) return false;
-  if (!F.want && x.kind === "recherche") return false;
-  if (F.fav && !favs.has(x.id)) return false;
-  if (F.photo && !x.image) return false;
-  if (F.price && x.price == null) return false;
-  if (skip !== "category" && F.category.length && !F.category.includes(x.category)) return false;
-  if (skip !== "motor" && F.motor.length && !F.motor.includes(x.motor)) return false;
-  if (skip !== "source" && F.source.length && !F.source.includes(x.source)) return false;
-  if (skip !== "region" && F.region && x.region !== F.region) return false;
-  if (skip !== "seller" && F.seller && sellerOf(x) !== F.seller) return false;
-  if (F.pmin !== "" && (x.price == null || x.price < +F.pmin)) return false;
-  if (F.pmax !== "" && (x.price == null || x.price > +F.pmax)) return false;
-  if (F.age) {
+// Critères communs aux filtres de l'app et aux alertes (mêmes règles que alerts.py côté GitHub)
+// `skip` permet de calculer les compteurs d'une facette sans son propre filtre
+function matchesCrit(x, c, skip) {
+  if (c.group !== false && x.dup_of) return false;
+  if (!c.want && x.kind === "recherche") return false;
+  if (c.photo && !x.image) return false;
+  if (c.price && x.price == null) return false;
+  if (c.deals && !x.deal) return false;
+  for (const f of ["category", "motor", "source", "brand"])
+    if (skip !== f && c[f]?.length && !c[f].includes(x[f])) return false;
+  if (skip !== "region" && c.region && x.region !== c.region) return false;
+  if (skip !== "seller" && c.seller && sellerOf(x) !== c.seller) return false;
+  if (c.pmin !== "" && c.pmin != null && (x.price == null || x.price < +c.pmin)) return false;
+  if (c.pmax !== "" && c.pmax != null && (x.price == null || x.price > +c.pmax)) return false;
+  if (c.age) {
     const d = x.date || x.first_seen;
-    if (!d || Date.now() - new Date(d) > F.age * 86400000) return false;
+    if (!d || Date.now() - new Date(d) > c.age * 86400000) return false;
   }
-  if (F.q) {
-    const hay = x._hay ??= norm([x.title, x.category, x.subcategory, x.motor, x.location, x.region, x.source, x.condition].join(" "));
-    if (!norm(F.q).split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
+  if (skip !== "dist" && c.dist && myPos) { const k = kmTo(x.geo); if (k == null || k > +c.dist) return false; }
+  if (c.q) {
+    const hay = x._hay ??= norm([x.title, x.category, x.subcategory, x.motor, x.brand, x.model, x.location, x.region, x.source, x.condition].join(" "));
+    if (!norm(c.q).split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
   }
   return true;
+}
+function matches(x, skip) {
+  if (!F.hidden && hidden.has(x.id)) return false;
+  if (F.fav && !favs.has(x.id)) return false;
+  return matchesCrit(x, F, skip);
 }
 
 const SORTS = {
@@ -262,6 +437,8 @@ const SORTS = {
   "price-desc": (a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity),
   title: (a, b) => a.title.localeCompare(b.title, "fr"),
   site: (a, b) => a.source.localeCompare(b.source) || SORTS.recent(a, b),
+  deal: (a, b) => (b.deal || 0) - (a.deal || 0) || SORTS.recent(a, b),
+  near: (a, b) => (kmTo(a.geo) ?? Infinity) - (kmTo(b.geo) ?? Infinity),
 };
 
 function counts(field) {
@@ -274,9 +451,17 @@ function renderFacets() {
   const checklist = (el, field, labels, extra = []) => {
     const c = counts(field);
     const keys = [...new Set([...extra, ...all.map((x) => x[field]).filter(Boolean)])].sort((a, b) => (c[b] || 0) - (c[a] || 0));
-    $(el).innerHTML = keys.map((k) => `<label class="check" ${field === "source" && sourceInfo[k]?.ok === false ? `title="Site injoignable lors de la dernière collecte"` : ""}><input type="checkbox" data-f="${field}" value="${esc(k)}" ${F[field].includes(k) ? "checked" : ""}>${esc(labels?.[k] || k)}${field === "source" && sourceInfo[k]?.ok === false ? " ⚠️" : ""}<span class="n">${c[k] || 0}</span></label>`).join("");
+    $(el).innerHTML = keys.map((k) => `<label class="check" ${field === "source" && sourceInfo[k]?.ok === false ? `title="${esc(sourceInfo[k].warn || "Site injoignable lors de la dernière collecte")} : anciennes annonces conservées"` : ""}><input type="checkbox" data-f="${field}" value="${esc(k)}" ${F[field].includes(k) ? "checked" : ""}>${esc(labels?.[k] || k)}${field === "source" && sourceInfo[k]?.ok === false ? " ⚠️" : ""}<span class="n">${c[k] || 0}</span></label>`).join("");
   };
   checklist("f-category", "category");
+  checklist("f-brand", "brand");
+  const brandRows = [...$("f-brand").children];
+  const brandLimit = showAllBrands ? Infinity : 10;
+  brandRows.forEach((r, i) => { r.hidden = i >= brandLimit && !r.querySelector("input").checked; });
+  $("moreBrands").textContent = brandRows.length > 10 ? (showAllBrands ? "Moins de marques" : `Toutes les marques (${brandRows.length})`) : "";
+  $("posLabel").innerHTML = myPos ? `Autour de <b>${esc(myPos.label)}</b> · <button class="linkbtn" id="forgetPos">effacer</button>` : "Indiquez un code postal ou touchez 📍";
+  const dc = myPos ? DISTANCES.slice(1).map((d) => all.filter((x) => matches(x, "dist") && (kmTo(x.geo) ?? Infinity) <= +d).length) : [];
+  $("f-dist").innerHTML = myPos ? DISTANCES.map((d, i) => `<button class="chip ${F.dist === d ? "on" : ""}" data-dist="${d}">${d ? `${d} km <small>${dc[i - 1]}</small>` : "Partout"}</button>`).join("") : "";
   checklist("f-source", "source", null, Object.keys(sourceInfo));  // y compris les sites sans annonce en ce moment
   const mc = counts("motor");
   $("f-motor").innerHTML = MOTORS.map((m) => `<button class="chip ${F.motor.includes(m) ? "on" : ""}" data-motor="${m}">${m} <small>${mc[m] || 0}</small></button>`).join("");
@@ -300,7 +485,7 @@ function wantThumbs(visible) {
     chunks[t] = "loading";
     fetch(`thumbs-${String(t).padStart(2, "0")}.json`)
       .then((r) => r.json())
-      .then((j) => { Object.assign(thumbs, j); chunks[t] = "ok"; render(false); })
+      .then((j) => { Object.assign(thumbs, j); chunks[t] = "ok"; favMode ? renderFavs() : render(false); })
       .catch(() => { chunks[t] = "failed"; });
   }
 }
@@ -313,18 +498,22 @@ function card(x) {
     isNew ? `<span class="tag new">Nouveau</span>` : "",
     `<span class="tag">${esc(x.category)}</span>`,
     x.motor ? `<span class="tag">${esc(x.motor)}</span>` : "",
+    x.deal ? `<span class="tag deal" title="Prix habituel pour ce modèle : ${esc(fmtPrice(x.median))}">−${x.deal} % vs prix habituel</span>` : "",
+    x.brand ? `<span class="tag src">${esc(x.brand)}</span>` : "",
     x.condition && x.condition !== "Occasion" ? `<span class="tag src">${esc(x.condition)}</span>` : "",
   ].join("");
+  const km = kmTo(x.geo);
   return `<article class="card">
     <a class="main" href="${esc(x.url)}" target="_blank" rel="noopener">
-      <div class="thumb">${thumbOf(x) ? `<img loading="lazy" src="${esc(thumbOf(x))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : "Pas de photo"}</div>
+      <div class="thumb">${thumbOf(x) ? `<img loading="lazy" decoding="async" src="${esc(thumbOf(x))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : "Pas de photo"}</div>
       <div class="body">
         <div class="price">${fmtPrice(x.price)}${x.price_new && x.price ? ` <s>${fmtPrice(x.price_new)}</s><span class="off">−${Math.round(100 - (x.price / x.price_new) * 100)} %</span>` : ""}</div>
         <div class="title" title="${esc(x.title)}">${esc(x.title)}</div>
         <div class="tags">${tags}</div>
-        <div class="meta"><span>📍 ${esc(x.region || x.location || "France")}</span>${x.date || x.date_text ? `<span>🕒 ${esc(x.date ? ago(x.date) : x.date_text)}</span>` : ""}<span>${esc(x.source)}</span></div>
+        <div class="meta"><span>📍 ${km != null ? `${Math.round(km)} km · ` : ""}${esc(x.region || x.location || "France")}</span>${x.date || x.date_text ? `<span>🕒 ${esc(x.date ? ago(x.date) : x.date_text)}</span>` : ""}<span>${esc(x.source)}</span></div>
       </div>
     </a>
+    ${x.also?.length && F.group ? `<div class="also">Aussi sur ${x.also.map((a) => `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.source)}</a>`).join("")}</div>` : ""}
     <div class="actions">
       <button class="icon-btn hide" data-hide="${esc(x.id)}" title="${hidden.has(x.id) ? "Réafficher" : "Masquer cette annonce"}">${hidden.has(x.id) ? "↺" : "✕"}</button>
       <button class="icon-btn fav ${favs.has(x.id) ? "on" : ""}" data-fav="${esc(x.id)}" title="Favori">${favs.has(x.id) ? "♥" : "♡"}</button>
@@ -338,6 +527,9 @@ function renderActive() {
   F.category.forEach((v) => chips.push(["category:" + v, v]));
   F.motor.forEach((v) => chips.push(["motor:" + v, v]));
   F.source.forEach((v) => chips.push(["source:" + v, v]));
+  F.brand.forEach((v) => chips.push(["brand:" + v, v]));
+  if (F.dist && myPos) chips.push(["dist", `≤ ${F.dist} km de ${myPos.label}`]);
+  if (F.deals) chips.push(["deals", "Bonnes affaires"]);
   if (F.region) chips.push(["region", F.region]);
   if (F.seller) chips.push(["seller", SELLERS.find((s) => s[0] === F.seller)[1]]);
   if (F.pmin !== "" || F.pmax !== "") chips.push(["price", `${F.pmin || 0} – ${F.pmax || "∞"} €`]);
@@ -380,34 +572,169 @@ function renderPager(pages, total) {
   $("pagerInfo").textContent = `Annonces ${((page - 1) * PAGE + 1).toLocaleString("fr-FR")} à ${Math.min(page * PAGE, total).toLocaleString("fr-FR")} sur ${total.toLocaleString("fr-FR")}`;
 }
 
+// --- Alertes -------------------------------------------------------------------
+let alertsList = store.get("ao-alerts", []);
+const CRIT_KEYS = ["q", "category", "motor", "source", "brand", "region", "seller", "pmin", "pmax", "photo", "deals", "want", "dist"];
+function currentCrit() {
+  const c = {};
+  for (const k of CRIT_KEYS) { const v = F[k]; if (v !== "" && v !== false && !(Array.isArray(v) && !v.length)) c[k] = v; }
+  if (c.dist && myPos) c.pos = { lat: +myPos.lat.toFixed(2), lon: +myPos.lon.toFixed(2), label: myPos.label }; else delete c.dist;
+  return c;
+}
+function critText(c) {
+  const parts = [];
+  if (c.q) parts.push(`« ${c.q} »`);
+  for (const k of ["category", "brand", "motor", "source"]) if (c[k]) parts.push(c[k].join(", "));
+  if (c.pmin || c.pmax) parts.push(`${c.pmin || 0} – ${c.pmax || "∞"} €`);
+  if (c.dist) parts.push(`≤ ${c.dist} km de ${c.pos.label}`);
+  if (c.region) parts.push(c.region);
+  if (c.seller) parts.push(c.seller === "boutique" ? "boutiques" : "particuliers");
+  if (c.deals) parts.push("bonnes affaires");
+  return parts.join(" · ") || "Toutes les annonces";
+}
+// Une alerte applique ses critères avec la position enregistrée avec elle
+function alertMatches(x, a) {
+  const saved = myPos; if (a.crit.pos) myPos = a.crit.pos;
+  try { return matchesCrit(x, a.crit); } finally { myPos = saved; }
+}
+function alertCounts(a) {
+  let total = 0, fresh = 0;
+  for (const x of all) if (alertMatches(x, a)) { total++; if ((x.first_seen || "") > a.seen) fresh++; }
+  return { total, fresh };
+}
+function updateAlertCount() {
+  const n = alertsList.reduce((t, a) => t + alertCounts(a).fresh, 0);
+  $("alertCount").textContent = n ? ` ${n}` : "";
+  $("alertsBtn").title = n ? `${n} nouvelle(s) annonce(s) pour vos alertes` : "Mes alertes";
+}
+function renderAlerts() {
+  $("alertList").innerHTML = alertsList.length ? alertsList.map((a, i) => {
+    const c = alertCounts(a);
+    return `<div class="alert-row"><b>${esc(a.name)}</b>
+      <div class="acts"><button class="btn" data-alert-view="${i}">Voir${c.fresh ? ` <span class="alert-new">${c.fresh} nouv.</span>` : ""}</button><button class="btn" data-alert-del="${i}" title="Supprimer">✕</button></div>
+      <small>${esc(critText(a.crit))} · ${c.total} annonce${c.total > 1 ? "s" : ""}</small></div>`;
+  }).join("") : `<p>Aucune alerte. Réglez les filtres puis touchez « 🔔 Créer une alerte ».</p>`;
+}
+function openAlerts(withNew) {
+  $("alertNew").hidden = !withNew;
+  if (withNew) { $("alertCrit").textContent = critText(currentCrit()); $("alertName").value = F.q || ""; }
+  renderAlerts();
+  $("alertSheet").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeAlerts() { $("alertSheet").hidden = true; document.body.style.overflow = ""; updateAlertCount(); }
+
+// --- Page favoris -------------------------------------------------------------
+let favMode = false;
+const FAV_SORTS = {
+  added: (a, b) => (b.added || "").localeCompare(a.added || ""),
+  "price-asc": (a, b) => (a.price ?? Infinity) - (b.price ?? Infinity),
+  "price-desc": (a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity),
+  drop: (a, b) => (a.delta ?? 0) - (b.delta ?? 0),
+  site: (a, b) => (a.source || "").localeCompare(b.source || "") || FAV_SORTS.added(a, b),
+};
+function updateFavCount() {
+  $("favCount").textContent = favs.size || "";
+  $("favDot").className = favEvents.some((e) => e.t > favSeen && favs.has(e.id)) ? "dot" : "";
+}
+const EVENT_TEXT = {
+  down: (e) => `📉 <b>${esc(e.title)}</b> : ${fmtPrice(e.from)} → ${fmtPrice(e.to)}`,
+  up: (e) => `📈 <b>${esc(e.title)}</b> : ${fmtPrice(e.from)} → ${fmtPrice(e.to)}`,
+  gone: (e) => `❌ <b>${esc(e.title)}</b> n'est plus en ligne (vendue ?)`,
+  back: (e) => `↩️ <b>${esc(e.title)}</b> est de nouveau en ligne`,
+};
+function favCard(f) {
+  const live = byId.get(f.id);
+  const img = live ? thumbOf(live) : (useThumbs ? null : f.image);
+  const delta = f.delta;
+  const tags = [
+    !live ? `<span class="tag gone">Plus en ligne</span>` : "",
+    delta ? `<span class="delta ${delta < 0 ? "down" : "up"}">${delta < 0 ? "↓" : "↑"} ${fmtPrice(Math.abs(delta))} depuis l'ajout</span>` : "",
+    f.category ? `<span class="tag">${esc(f.category)}</span>` : "",
+    f.motor ? `<span class="tag">${esc(f.motor)}</span>` : "",
+  ].join("");
+  return `<article class="card ${live ? "" : "gone"}">
+    <a class="main" href="${esc(f.url || "#")}" target="_blank" rel="noopener">
+      <div class="thumb">${img ? `<img loading="lazy" src="${esc(img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : "Pas de photo"}</div>
+      <div class="body">
+        <div class="price">${fmtPrice(f.price)}${delta ? ` <s>${fmtPrice(f.price_added)}</s>` : ""}</div>
+        <div class="title" title="${esc(f.title)}">${esc(f.title)}</div>
+        <div class="tags">${tags}</div>
+        ${f.history?.length > 1 ? `<div class="hist">Prix : ${f.history.map((h) => fmtPrice(h.p)).join(" → ")}</div>` : ""}
+        <div class="meta"><span>📍 ${esc(f.region || f.location || "France")}</span><span>♥ ${esc(ago(f.added))}</span><span>${esc(f.source || "")}</span></div>
+      </div>
+    </a>
+    <div class="actions"><button class="icon-btn fav on" data-fav="${esc(f.id)}" title="Retirer des favoris">♥</button></div>
+  </article>`;
+}
+function renderFavs() {
+  const list = [...favs].map((id) => {
+    const f = { ...(favData[id] || { id, title: "Annonce", added: "" }) };
+    f.online = byId.has(id);
+    f.delta = f.price != null && f.price_added != null && f.price !== f.price_added ? f.price - f.price_added : 0;
+    return f;
+  }).sort(FAV_SORTS[$("favSort").value] || FAV_SORTS.added);
+  wantThumbs(list.map((f) => byId.get(f.id)).filter(Boolean));
+  const online = list.filter((f) => f.online);
+  const total = online.reduce((t, f) => t + (f.price || 0), 0);
+  const drops = list.filter((f) => f.delta < 0).length;
+  const news = favEvents.filter((e) => e.t > favSeen && favs.has(e.id));
+  $("favNews").hidden = !news.length;
+  $("favNews").innerHTML = `<b>Depuis votre dernière visite</b>` + news.slice(0, 10).map((e) => `<div>${EVENT_TEXT[e.type](e)} <span class="hist">· ${ago(e.t)}</span></div>`).join("");
+  $("favStats").innerHTML = list.length ? [
+    [list.length, `favori${list.length > 1 ? "s" : ""}`],
+    [online.length, "toujours en ligne"],
+    [drops, `baisse${drops > 1 ? "s" : ""} de prix`],
+    [fmtPrice(total), "valeur totale en ligne"],
+  ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("") : "";
+  $("favGrid").className = "grid" + (F.view === "list" ? " list" : "");
+  $("favGrid").innerHTML = list.length ? list.map(favCard).join("")
+    : `<div class="fav-empty">Aucun favori pour l'instant.<br>Touchez ♡ sur une annonce pour la retrouver ici, avec le suivi de son prix.</div>`;
+  $("favClean").hidden = !list.some((f) => !f.online);
+  updateFavCount();
+}
+function setFavMode(on) {
+  favMode = on;
+  document.body.classList.toggle("fav-mode", on);
+  $("favPage").hidden = !on;
+  $("filters").classList.remove("open");
+  if (on) {
+    renderFavs(); window.scrollTo(0, 0);
+    favSeen = new Date().toISOString(); store.set("ao-favseen", favSeen); updateFavCount();  // vus, le bandeau reste jusqu'à la prochaine visite
+  }
+  else render(false);
+  try { history.replaceState(null, "", on ? "#favoris" : location.pathname + location.search); } catch {}
+}
+
 function syncInputs() {
   if (document.activeElement !== $("q")) $("q").value = F.q;
   $("pmin").value = F.pmin; $("pmax").value = F.pmax; $("sort").value = F.sort;
+  $("o-deals").checked = F.deals; $("o-group").checked = F.group;
   $("o-photo").checked = F.photo; $("o-price").checked = F.price; $("o-want").checked = F.want; $("o-fav").checked = F.fav; $("o-hidden").checked = F.hidden;
   $("v-grid").classList.toggle("on", F.view === "grid"); $("v-list").classList.toggle("on", F.view === "list");
 }
 
 let firstBatch = "", updatedThumbs = null, sourceInfo = {};
 let staticMode = false;
+// Version en ligne : annonces.json publié avec la page ; sinon serveur local (python3 server.py)
 async function getData() {
-  if (!staticMode) {
-    try {
-      const r = await fetch("api/annonces", { cache: "no-store" });
-      if (r.ok && (r.headers.get("content-type") || "").includes("json")) return await r.json();
-    } catch {}
-  }
-  staticMode = true;  // version hébergée : annonces.json régénéré automatiquement
-  $("refresh").hidden = true;
-  return await (await fetch("annonces.json", { cache: "no-cache" })).json();
+  const r = await fetch("annonces.json", { cache: "no-cache" }).catch(() => null);
+  if (r?.ok) { staticMode = true; $("refresh").hidden = true; return await r.json(); }
+  return await (await fetch("api/annonces", { cache: "no-store" })).json();
 }
 async function load() {
   const d = await getData();
   all = d.listings; updated = d.updated; sourceInfo = d.sources || {};
+  byId = new Map(all.map((x) => [x.id, x]));
+  refreshFavData();
   // Miniatures publiées avec la page (version Claude) ; sur GitHub Pages, les photos d'origine
   if (staticMode && all.some((x) => x.t != null) && d.updated !== updatedThumbs) { useThumbs = true; thumbs = {}; chunks = {}; updatedThumbs = d.updated; }
   firstBatch = all.reduce((m, x) => (x.first_seen && (!m || x.first_seen < m) ? x.first_seen : m), "");
   setStatus(d.running, d.updated);
   render(false);
+  if (favMode) renderFavs();
+  updateFavCount();
+  updateAlertCount();
   if (d.running) poll();
 }
 
@@ -438,7 +765,7 @@ $("pmin").addEventListener("change", (e) => { F.pmin = e.target.value; render();
 $("pmax").addEventListener("change", (e) => { F.pmax = e.target.value; render(); });
 $("sort").addEventListener("change", (e) => { F.sort = e.target.value; render(); });
 $("f-region").addEventListener("change", (e) => { F.region = e.target.value; render(); });
-for (const [id, k] of [["o-photo", "photo"], ["o-price", "price"], ["o-want", "want"], ["o-fav", "fav"], ["o-hidden", "hidden"]])
+for (const [id, k] of [["o-deals", "deals"], ["o-group", "group"], ["o-photo", "photo"], ["o-price", "price"], ["o-want", "want"], ["o-fav", "fav"], ["o-hidden", "hidden"]])
   $(id).addEventListener("change", (e) => { F[k] = e.target.checked; render(); });
 $("v-grid").onclick = () => { F.view = "grid"; render(false); };
 $("v-list").onclick = () => { F.view = "list"; render(false); };
@@ -449,6 +776,56 @@ $("pager").addEventListener("click", (e) => {
   render(false);
   document.querySelector("main").scrollIntoView({ block: "start" });
 });
+$("favBtn").onclick = () => setFavMode(!favMode);
+$("favBack").onclick = () => setFavMode(false);
+$("favSort").onchange = renderFavs;
+$("favClean").onclick = () => {
+  for (const id of [...favs]) if (!byId.has(id)) { favs.delete(id); delete favData[id]; }
+  savePrefs(); renderFavs();
+};
+window.addEventListener("hashchange", () => setFavMode(location.hash === "#favoris"));
+$("alertsBtn").onclick = () => openAlerts(false);
+$("alertFromFilters").onclick = () => openAlerts(true);
+$("alertClose").onclick = closeAlerts;
+$("alertSheet").addEventListener("click", (e) => {
+  if (e.target === $("alertSheet")) return closeAlerts();
+  const v = e.target.closest("[data-alert-view]"), d = e.target.closest("[data-alert-del]");
+  if (v) {
+    const a = alertsList[+v.dataset.alertView];
+    const { pos, ...crit } = a.crit;
+    if (pos) { myPos = pos; store.set("ao-pos", pos); }
+    F = Object.assign(defaults(), { sort: F.sort, view: F.view }, crit);
+    F.sort = "new";
+    a.seen = new Date().toISOString(); store.set("ao-alerts", alertsList);
+    closeAlerts(); if (favMode) setFavMode(false); render();
+  } else if (d) {
+    alertsList.splice(+d.dataset.alertDel, 1); store.set("ao-alerts", alertsList); renderAlerts(); updateAlertCount();
+  }
+});
+$("alertAdd").onclick = () => {
+  alertsList.push({ name: $("alertName").value.trim() || critText(currentCrit()), crit: currentCrit(), seen: new Date().toISOString() });
+  store.set("ao-alerts", alertsList); $("alertNew").hidden = true; renderAlerts(); updateAlertCount();
+};
+$("moreBrands").onclick = () => { showAllBrands = !showAllBrands; renderFacets(); };
+async function setPosFromCp(cp) {
+  $("posLabel").textContent = "Recherche…";
+  try {
+    const r = await (await fetch(`https://geo.api.gouv.fr/communes?codePostal=${encodeURIComponent(cp)}&fields=nom,centre,population&format=json`)).json();
+    const c = r.sort((a, b) => (b.population || 0) - (a.population || 0))[0];
+    if (!c) throw new Error();
+    myPos = { lat: c.centre.coordinates[1], lon: c.centre.coordinates[0], label: `${c.nom} (${cp})` };
+    store.set("ao-pos", myPos); if (!F.dist) F.dist = "50"; render();
+  } catch { $("posLabel").textContent = "Code postal introuvable"; }
+}
+$("cp").addEventListener("input", (e) => { if (/^\d{5}$/.test(e.target.value)) setPosFromCp(e.target.value); });
+$("locate").onclick = () => {
+  if (!navigator.geolocation) return ($("posLabel").textContent = "Géolocalisation indisponible : indiquez un code postal");
+  $("posLabel").textContent = "Localisation…";
+  navigator.geolocation.getCurrentPosition(
+    (p) => { myPos = { lat: +p.coords.latitude.toFixed(2), lon: +p.coords.longitude.toFixed(2), label: "ma position" }; store.set("ao-pos", myPos); if (!F.dist) F.dist = "50"; render(); },
+    () => { $("posLabel").textContent = "Position refusée : indiquez un code postal"; },
+    { maximumAge: 600000, timeout: 10000 });
+};
 $("allSources").onclick = () => { F.source = []; render(); };
 $("reset").onclick = () => { F = Object.assign(defaults(), { sort: F.sort, view: F.view }); render(); };
 $("filtersToggle").onclick = () => $("filters").classList.add("open");
@@ -465,13 +842,15 @@ document.addEventListener("change", (e) => {
   render();
 });
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-motor],[data-age],[data-seller],[data-fav],[data-hide],[data-remove]");
+  if (e.target.id === "forgetPos") { myPos = null; store.set("ao-pos", null); F.dist = ""; return render(); }
+  const t = e.target.closest("[data-motor],[data-age],[data-seller],[data-dist],[data-fav],[data-hide],[data-remove]");
   if (!t) return;
   const d = t.dataset;
   if (d.motor) F.motor = F.motor.includes(d.motor) ? F.motor.filter((m) => m !== d.motor) : [...F.motor, d.motor];
   else if (d.age !== undefined) F.age = d.age;
   else if (d.seller !== undefined) F.seller = d.seller;
-  else if (d.fav) { favs.has(d.fav) ? favs.delete(d.fav) : favs.add(d.fav); savePrefs(); return render(false); }
+  else if (d.dist !== undefined) { F.dist = d.dist; if (F.dist && F.sort === "recent") F.sort = "near"; }
+  else if (d.fav) { toggleFav(d.fav); return favMode ? renderFavs() : render(false); }
   else if (d.hide) { hidden.has(d.hide) ? hidden.delete(d.hide) : hidden.add(d.hide); savePrefs(); return render(false); }
   else if (d.remove) {
     const [k, v] = d.remove.split(/:(.*)/s);
@@ -485,11 +864,12 @@ document.addEventListener("click", (e) => {
 // Sur claude.ai : favoris et annonces masquées suivent le compte (Mac ↔ iPhone)
 let prefsRef = null, prefsTimer, prefsWriting = Promise.resolve();
 function savePrefs() {
-  store.set("ao-favs", [...favs]); store.set("ao-hidden", [...hidden]);
+  store.set("ao-favs", [...favs]); store.set("ao-hidden", [...hidden]); store.set("ao-favdata", favData); store.set("ao-favevents", favEvents);
+  updateFavCount();
   if (!prefsRef) return;
   clearTimeout(prefsTimer);
   prefsTimer = setTimeout(() => {
-    const body = { favs: [...favs], hidden: [...hidden] };
+    const body = { favs: [...favs], hidden: [...hidden], favData };
     prefsWriting = prefsWriting.then(() => prefsRef.set(body)).catch(() => {});
   }, 800);
 }
@@ -505,17 +885,20 @@ function savePrefs() {
   if (snap.exists) {
     const p = snap.data();
     favs = new Set([...(p.favs || []), ...favs]); hidden = new Set([...(p.hidden || []), ...hidden]);
+    favData = { ...(p.favData || {}), ...favData };
     if (favs.size !== (p.favs || []).length || hidden.size !== (p.hidden || []).length) savePrefs();
     render(false);
   } else if (favs.size || hidden.size) savePrefs();
   ref.onSnapshot((s) => {
     if (!s.exists || s.metadata.hasPendingWrites) return;
     const p = s.data();
-    favs = new Set(p.favs || []); hidden = new Set(p.hidden || []);
-    render(false);
+    favs = new Set(p.favs || []); hidden = new Set(p.hidden || []); favData = p.favData || favData;
+    favMode ? renderFavs() : render(false);
   }, () => {});
 })();
 
+if (location.hash === "#favoris") setFavMode(true);
+updateFavCount();
 load().catch(() => { $("count").textContent = "Impossible de charger les annonces (hors ligne ?)."; });
 </script>
 

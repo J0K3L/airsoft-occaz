@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Airsoft Occaz",
   "short_name": "Airsoft Occaz",
   "description": "Toutes les annonces airsoft d'occasion en France, au même endroit.",
@@ -9,7 +10,18 @@
   "background_color": "#141612",
   "theme_color": "#556b2f",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait-primary"
 }
