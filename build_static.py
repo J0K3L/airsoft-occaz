@@ -7,9 +7,14 @@ import argparse
 import json
 import os
 import shutil
+import time
 from datetime import datetime
 
-import server
+# Heures à l'heure française : les serveurs de GitHub sont en UTC, et les heures sont enregistrées sans fuseau
+os.environ["TZ"] = "Europe/Paris"
+time.tzset()
+
+import server  # noqa: E402
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "site")
