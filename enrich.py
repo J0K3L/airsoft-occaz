@@ -3,6 +3,7 @@
   model  modèle reconnu (M4/AR15, AK, Glock, MWS…), pour comparer des prix comparables
   deal   « bonne affaire » : % sous le prix médian du même modèle et de la même motorisation
   geo    [latitude, longitude] approximative (ville, sinon département) pour le filtre par distance
+  dept   département, ex. « Yvelines (78) » (complète aussi la région quand le site ne la donne pas)
   also   annonce identique publiée sur d'autres sites (doublons) ; les copies portent dup_of
 """
 import json
@@ -89,48 +90,57 @@ def compute_deals(listings):
 
 def load_communes():
     data = json.loads(scrapers.fetch("https://geo.api.gouv.fr/communes?fields=nom,codesPostaux,centre,codeDepartement,population&format=json"))
-    by_cp, by_name, dept = {}, {}, defaultdict(lambda: [0.0, 0.0, 0])
+    by_cp, by_name, dept = {}, {}, defaultdict(lambda: [0.0, 0.0, 0])  # by_cp et by_name : (point, département)
     for c in sorted(data, key=lambda c: c.get("population") or 0):  # la plus peuplée l'emporte
         if not c.get("centre"):
             continue
         lon, lat = c["centre"]["coordinates"]
         pt = [round(lat, 3), round(lon, 3)]
         for cp in c.get("codesPostaux", []):
-            by_cp[cp] = pt
-        by_name[re.sub(r"[^a-z0-9]", "", norm(c["nom"]))] = pt
+            by_cp[cp] = (pt, c["codeDepartement"])
+        by_name[re.sub(r"[^a-z0-9]", "", norm(c["nom"]))] = (pt, c["codeDepartement"])
         w = max(c.get("population") or 1, 1)
         d = dept[c["codeDepartement"]]
         d[0] += lat * w; d[1] += lon * w; d[2] += w
     by_dept = {k: [round(v[0] / v[2], 3), round(v[1] / v[2], 3)] for k, v in dept.items()}
-    return by_cp, by_name, by_dept
+    names = {d["code"]: d["nom"] for d in json.loads(scrapers.fetch("https://geo.api.gouv.fr/departements?fields=nom,code"))}
+    return by_cp, by_name, by_dept, names
 
 
 def geocode(listings, log=print):
     try:
-        by_cp, by_name, by_dept = load_communes()
+        by_cp, by_name, by_dept, names = load_communes()
     except Exception as e:
         log(f"géolocalisation indisponible : {e}")
         return
     found = 0
     for x in listings:
         loc = x.get("location") or ""
-        geo = None
+        geo = dept = None
         cp = re.search(r"\b(\d{5})\b", loc)
         if cp:
-            geo = by_cp.get(cp.group(1)) or by_dept.get(cp.group(1)[:2])
+            geo, dept = by_cp.get(cp.group(1)) or (None, cp.group(1)[:2])
         elif x["source"] == "peew.fr" and loc:
-            geo = by_name.get(re.sub(r"[^a-z0-9]", "", norm(loc)))
+            city = re.sub(r"\s+\d+(er|e) arrondissement$", "", norm(loc))  # « Paris 14e Arrondissement » → Paris
+            geo, dept = by_name.get(re.sub(r"[^a-z0-9]", "", city), (None, None))
         elif x["source"] == "airsoftone.fr":
             d = re.search(r"\((\w{2,3})\)", loc)
-            geo = by_dept.get(d.group(1)) if d else None
+            dept = d.group(1) if d else None
         elif x["source"] == "zn-airsoft.fr":
-            geo = by_name.get("vourles")
+            geo, dept = by_name.get("vourles", (None, None))
+        geo = geo or by_dept.get(dept)
         if geo:
             x["geo"] = geo
             found += 1
         else:
             x.pop("geo", None)
-    log(f"géolocalisation : {found}/{len(listings)} annonces placées")
+        if dept in names:
+            x["dept"] = f"{names[dept]} ({dept})"
+            x["region"] = x.get("region") or scrapers.DEPT_REGION.get(dept)
+        else:
+            x.pop("dept", None)
+    log(f"géolocalisation : {found}/{len(listings)} annonces placées, "
+        f"{sum(1 for x in listings if x.get('dept'))} avec leur département")
 
 
 # --- Doublons entre sites -------------------------------------------------------

@@ -105,6 +105,8 @@ Les alertes sont enregistrées dans le navigateur (et dans le compte si vous êt
 - Catégorie (réplique longue, poing, sniper…) et motorisation (AEG, GBB, HPA…) sont déduites de la
   rubrique du site et du titre : elles peuvent parfois se tromper.
 - Filtre Vendeur : « Boutiques » = zones occasion des magasins + vendeurs pros de NaturaBuy.
+- Filtre Département : connu pour Airsoft-Occasion (code postal), Peew (ville), AirsoftOne et ZN ;
+  Occasion-Airsoft n'indique que la région et NaturaBuy aucun lieu dans ses listes.
 - Page **Favoris** (bouton ♥ en haut, ou lien `#favoris`) : suivi du prix depuis l'ajout, annonces retirées du site
   gardées et signalées « Plus en ligne ». Favoris, annonces masquées et filtres sont enregistrés dans le
   navigateur de chaque appareil.
