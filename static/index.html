@@ -157,6 +157,7 @@ aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh -
 .others a { display: block; padding: 3px 0; color: var(--accent); text-decoration: none; }
 .others a:hover { text-decoration: underline; }
 .others p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.note-small { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
 
 /* Page favoris */
 body.fav-mode .layout { display: none; }
@@ -195,7 +196,8 @@ body.fav-mode .layout { display: none; }
   .search { order: 5; flex-basis: 100%; }
   .layout { grid-template-columns: 1fr; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #filtersToggle { display: inline-block; }
-  aside { display: none; position: fixed; inset: 0; top: 0; max-height: none; z-index: 30; border-radius: 0; padding-top: 50px; }
+  aside { display: none; position: fixed; inset: 0; top: 0; max-height: none; z-index: 30; border-radius: 0; padding-top: 50px;
+    align-self: stretch; height: 100vh; height: 100dvh; overscroll-behavior: contain; } /* hauteur de l'écran, sinon pas de défilement */
   aside.open { display: block; padding-top: max(50px, calc(env(safe-area-inset-top) + 40px)); padding-bottom: env(safe-area-inset-bottom); }
   #closeFilters { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 16px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
@@ -244,6 +246,8 @@ body.fav-mode .layout { display: none; }
       <div class="chips" id="f-dist"></div>
     </div>
     <div class="fgroup"><h3>Région</h3><select id="f-region"><option value="">Toute la France</option></select></div>
+    <div class="fgroup"><h3>Département</h3><select id="f-dept"><option value="">Tous les départements</option></select>
+      <p class="note-small">Connu pour Airsoft-Occasion, Peew, AirsoftOne et ZN. Occasion-Airsoft n'indique que la région, NaturaBuy aucun lieu.</p></div>
     <div class="fgroup"><h3>Publiée</h3><div class="chips" id="f-age"></div></div>
     <div class="fgroup"><h3>Vendeur</h3><div class="chips" id="f-seller"></div></div>
     <div class="fgroup"><h3>Options</h3>
@@ -361,7 +365,7 @@ const store = {
 const SELLERS = [["particulier", "Particuliers"], ["boutique", "Boutiques"]];
 // Boutiques = zones occasion des magasins (Airsoft Entrepôt, OPS) et pros de NaturaBuy
 const sellerOf = (x) => /^(boutique|pro)/.test(x.seller || "") ? "boutique" : "particulier";
-const defaults = () => ({ q: "", category: [], motor: [], source: [], brand: [], seller: "", region: "", age: "", pmin: "", pmax: "",
+const defaults = () => ({ q: "", category: [], motor: [], source: [], brand: [], seller: "", region: "", dept: "", age: "", pmin: "", pmax: "",
   dist: "", deals: false, group: true, photo: false, price: false, want: false, fav: false, hidden: false, sort: "recent", view: "grid" });
 const DISTANCES = ["", "25", "50", "100", "200"];
 // Position de l'utilisateur pour le filtre par distance (code postal ou géolocalisation)
@@ -430,8 +434,9 @@ const fmtPrice = (p) => p == null ? "Prix non indiqué" : p.toLocaleString("fr-F
 function ago(iso) {
   if (!iso) return "";
   const s = (Date.now() - new Date(iso)) / 1000;
-  if (s < 3600) return `il y a ${Math.max(1, Math.round(s / 60))} min`;
-  if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (s < 86400) { const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60; return `il y a ${h} h${m ? ` ${m} min` : ""}`; }
   if (s < 86400 * 30) return `il y a ${Math.round(s / 86400)} j`;
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 }
@@ -449,6 +454,7 @@ function matchesCrit(x, c, skip) {
   for (const f of ["category", "motor", "source", "brand"])
     if (skip !== f && c[f]?.length && !c[f].includes(x[f])) return false;
   if (skip !== "region" && c.region && x.region !== c.region) return false;
+  if (skip !== "dept" && c.dept && x.dept !== c.dept) return false;
   if (skip !== "seller" && c.seller && sellerOf(x) !== c.seller) return false;
   if (c.pmin !== "" && c.pmin != null && (x.price == null || x.price < +c.pmin)) return false;
   if (c.pmax !== "" && c.pmax != null && (x.price == null || x.price > +c.pmax)) return false;
@@ -458,7 +464,7 @@ function matchesCrit(x, c, skip) {
   }
   if (skip !== "dist" && c.dist && myPos) { const k = kmTo(x.geo); if (k == null || k > +c.dist) return false; }
   if (c.q) {
-    const hay = x._hay ??= norm([x.title, x.category, x.subcategory, x.motor, x.brand, x.model, x.location, x.region, x.source, x.condition].join(" "));
+    const hay = x._hay ??= norm([x.title, x.category, x.subcategory, x.motor, x.brand, x.model, x.location, x.dept, x.region, x.source, x.condition].join(" "));
     if (!norm(c.q).split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
   }
   return true;
@@ -512,6 +518,11 @@ function renderFacets() {
   const regions = [...new Set(all.map((x) => x.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
   $("f-region").innerHTML = `<option value="">Toute la France</option>` +
     regions.map((r) => `<option value="${esc(r)}" ${F.region === r ? "selected" : ""}>${esc(r)} (${rc[r] || 0})</option>`).join("");
+  // Départements : ceux qui ont des annonces avec les autres filtres (donc ceux de la région choisie)
+  const deptc = counts("dept");
+  const depts = [...new Set(all.map((x) => x.dept).filter((d) => d && (deptc[d] || d === F.dept)))].sort((a, b) => a.localeCompare(b, "fr"));
+  $("f-dept").innerHTML = `<option value="">Tous les départements</option>` +
+    depts.map((d) => `<option value="${esc(d)}" ${F.dept === d ? "selected" : ""}>${esc(d)} — ${deptc[d] || 0}</option>`).join("");
 }
 
 // Hébergée chez Claude, la page ne peut pas charger d'images d'autres sites : elle utilise les miniatures publiées avec elle
@@ -549,7 +560,7 @@ function card(x) {
         <div class="price">${fmtPrice(x.price)}${x.price_new && x.price ? ` <s>${fmtPrice(x.price_new)}</s><span class="off">−${Math.round(100 - (x.price / x.price_new) * 100)} %</span>` : ""}</div>
         <div class="title" title="${esc(x.title)}">${esc(x.title)}</div>
         <div class="tags">${tags}</div>
-        <div class="meta"><span>📍 ${km != null ? `${Math.round(km)} km · ` : ""}${esc(x.region || x.location || "France")}</span>${x.date || x.date_text ? `<span>🕒 ${esc(x.date ? ago(x.date) : x.date_text)}</span>` : ""}<span>${esc(x.source)}</span></div>
+        <div class="meta"><span>📍 ${km != null ? `${Math.round(km)} km · ` : ""}${esc(x.dept || x.region || x.location || "France")}</span>${x.date || x.date_text ? `<span>🕒 ${esc(x.date ? ago(x.date) : x.date_text)}</span>` : ""}<span>${esc(x.source)}</span></div>
       </div>
     </a>
     ${x.also?.length && F.group ? `<div class="also">Aussi sur ${x.also.map((a) => `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.source)}</a>`).join("")}</div>` : ""}
@@ -570,6 +581,7 @@ function renderActive() {
   if (F.dist && myPos) chips.push(["dist", `≤ ${F.dist} km de ${myPos.label}`]);
   if (F.deals) chips.push(["deals", "Bonnes affaires"]);
   if (F.region) chips.push(["region", F.region]);
+  if (F.dept) chips.push(["dept", F.dept]);
   if (F.seller) chips.push(["seller", SELLERS.find((s) => s[0] === F.seller)[1]]);
   if (F.pmin !== "" || F.pmax !== "") chips.push(["price", `${F.pmin || 0} – ${F.pmax || "∞"} €`]);
   if (F.age) chips.push(["age", AGES.find((a) => a[0] === F.age)[1]]);
@@ -613,7 +625,7 @@ function renderPager(pages, total) {
 
 // --- Alertes -------------------------------------------------------------------
 let alertsList = store.get("ao-alerts", []);
-const CRIT_KEYS = ["q", "category", "motor", "source", "brand", "region", "seller", "pmin", "pmax", "photo", "deals", "want", "dist"];
+const CRIT_KEYS = ["q", "category", "motor", "source", "brand", "region", "dept", "seller", "pmin", "pmax", "photo", "deals", "want", "dist"];
 function currentCrit() {
   const c = {};
   for (const k of CRIT_KEYS) { const v = F[k]; if (v !== "" && v !== false && !(Array.isArray(v) && !v.length)) c[k] = v; }
@@ -627,6 +639,7 @@ function critText(c) {
   if (c.pmin || c.pmax) parts.push(`${c.pmin || 0} – ${c.pmax || "∞"} €`);
   if (c.dist) parts.push(`≤ ${c.dist} km de ${c.pos.label}`);
   if (c.region) parts.push(c.region);
+  if (c.dept) parts.push(c.dept);
   if (c.seller) parts.push(c.seller === "boutique" ? "boutiques" : "particuliers");
   if (c.deals) parts.push("bonnes affaires");
   return parts.join(" · ") || "Toutes les annonces";
@@ -736,7 +749,7 @@ function setFavMode(on) {
   favMode = on;
   document.body.classList.toggle("fav-mode", on);
   $("favPage").hidden = !on;
-  $("filters").classList.remove("open");
+  showFilters(false);
   if (on) {
     renderFavs(); window.scrollTo(0, 0);
     favSeen = new Date().toISOString(); store.set("ao-favseen", favSeen); updateFavCount();  // vus, le bandeau reste jusqu'à la prochaine visite
@@ -777,11 +790,16 @@ async function load() {
   if (d.running) poll();
 }
 
+let lastUpd = null;
 function setStatus(running, upd) {
+  lastUpd = upd;
   $("status").className = "status" + (running ? " busy" : "");
   $("status").textContent = running ? "Actualisation…" : upd ? `Mis à jour ${ago(upd)}` : "";
   $("refresh").disabled = running;
 }
+
+// La durée depuis la mise à jour avance d'elle-même, à la minute près
+setInterval(() => { if (lastUpd && !$("refresh").disabled) $("status").textContent = `Mis à jour ${ago(lastUpd)}`; }, 30000);
 
 let polling = false;
 async function poll() {
@@ -803,7 +821,12 @@ $("q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTime
 $("pmin").addEventListener("change", (e) => { F.pmin = e.target.value; render(); });
 $("pmax").addEventListener("change", (e) => { F.pmax = e.target.value; render(); });
 $("sort").addEventListener("change", (e) => { F.sort = e.target.value; render(); });
-$("f-region").addEventListener("change", (e) => { F.region = e.target.value; render(); });
+$("f-region").addEventListener("change", (e) => {
+  F.region = e.target.value;
+  if (F.region && F.dept && all.find((x) => x.dept === F.dept)?.region !== F.region) F.dept = "";  // département d'une autre région
+  render();
+});
+$("f-dept").addEventListener("change", (e) => { F.dept = e.target.value; render(); });
 for (const [id, k] of [["o-deals", "deals"], ["o-group", "group"], ["o-photo", "photo"], ["o-price", "price"], ["o-want", "want"], ["o-fav", "fav"], ["o-hidden", "hidden"]])
   $(id).addEventListener("change", (e) => { F[k] = e.target.checked; render(); });
 $("v-grid").onclick = () => { F.view = "grid"; render(false); };
@@ -867,8 +890,9 @@ $("locate").onclick = () => {
 };
 $("allSources").onclick = () => { F.source = []; render(); };
 $("reset").onclick = () => { F = Object.assign(defaults(), { sort: F.sort, view: F.view }); render(); };
-$("filtersToggle").onclick = () => $("filters").classList.add("open");
-$("closeFilters").onclick = () => $("filters").classList.remove("open");
+function showFilters(on) { $("filters").classList.toggle("open", on); document.body.style.overflow = on ? "hidden" : ""; }
+$("filtersToggle").onclick = () => showFilters(true);
+$("closeFilters").onclick = () => showFilters(false);
 $("refresh").onclick = async () => { await fetch("api/refresh", { method: "POST" }); setStatus(true); poll(); };
 // Retour sur l'app (iPhone) : recharge les annonces si elles ont changé
 document.addEventListener("visibilitychange", () => { if (!document.hidden) load().catch(() => {}); });
