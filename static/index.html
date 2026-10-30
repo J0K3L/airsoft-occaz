@@ -25,6 +25,7 @@
   --accent: #9bb567; --accent-ink: #141612; --accent-soft: #2a3220; --warn: #f59e0b; --fav: #fb923c; --good: #4ade80; --bad: #f87171;
   --shadow: 0 1px 2px rgba(0,0,0,.3); color-scheme: dark; }
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; } /* pas de texte agrandi automatiquement en paysage (iOS) */
 [hidden] { display: none !important; }
 body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
 a { color: inherit; }
@@ -45,8 +46,10 @@ header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; back
 .btn[disabled] { opacity: .6; cursor: progress; }
 #filtersToggle { display: none; }
 
-.layout { display: grid; grid-template-columns: 270px 1fr; gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto; }
-aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh - 90px); overflow: auto;
+.layout { display: grid; grid-template-columns: 270px 1fr; gap: 20px; padding: 20px; max-width: 1500px; margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
+aside { align-self: start; position: sticky; top: 74px; max-height: calc(100vh - 90px); max-height: calc(100dvh - 90px); overflow: auto;
   background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 6px 16px 16px; }
 .fgroup { padding: 12px 0; border-bottom: 1px solid var(--line); }
 .fgroup:last-child { border-bottom: 0; }
@@ -194,7 +197,7 @@ body.fav-mode .layout { display: none; }
   header { padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .brand small { display: none; }
   .search { order: 5; flex-basis: 100%; }
-  .layout { grid-template-columns: 1fr; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .layout { grid-template-columns: 1fr; padding-block: 14px max(14px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   #filtersToggle { display: inline-block; }
   aside { display: none; position: fixed; inset: 0; top: 0; max-height: none; z-index: 30; border-radius: 0; padding-top: 50px;
     align-self: stretch; height: 100vh; height: 100dvh; overscroll-behavior: contain; } /* hauteur de l'écran, sinon pas de défilement */
@@ -212,6 +215,64 @@ body.fav-mode .layout { display: none; }
 }
 @media (max-width: 380px) { .grid { grid-template-columns: 1fr 1fr; gap: 8px; } }
 @media (min-width: 861px) { #closeFilters { display: none; } }
+
+/* Grands écrans de PC (2K, 4K), à l'horizontale (16:9) comme à la verticale (9:16).
+   Grossissement par paliers, comme la mise à l'échelle de Windows, selon les deux dimensions de la fenêtre.
+   La largeur maximale donne 6 colonnes de cartes (8 en 4K horizontal), pour des rangées complètes de 48 annonces. */
+@media (min-width: 1900px) {
+  .layout { max-width: 1840px; }
+  header { padding-inline: max(20px, calc((100% - 1840px) / 2 + 20px)); }
+  .favpage { max-width: 1400px; }
+}
+/* Le grossissement s'applique aussi à la hauteur d'écran (dvh) : on la divise d'autant pour le panneau des filtres */
+@media (min-width: 2400px) and (min-height: 1100px), (orientation: portrait) and (min-width: 1400px) and (min-height: 2200px) {
+  body { zoom: 1.25; }  /* 2560 × 1440 ou 1440 × 2560 : comme 125 % */
+  aside { max-height: calc(100dvh / 1.25 - 90px); }
+}
+@media (min-width: 3200px) and (min-height: 1700px), (orientation: portrait) and (min-width: 2000px) and (min-height: 3200px) {
+  body { zoom: 1.5; }   /* 3840 × 2160 ou 2160 × 3840 (4K) : comme 150 % */
+  aside { max-height: calc(100dvh / 1.5 - 90px); }
+}
+@media (min-width: 3200px) and (min-height: 1700px) {
+  .layout { max-width: 2250px; }
+  header { padding-inline: max(20px, calc((100% - 2250px) / 2 + 20px)); }
+}
+
+/* Très petits écrans : écran extérieur des Galaxy Z Fold (280 px), anciens petits téléphones */
+@media (max-width: 340px) {
+  header { gap: 8px; }
+  .btn { padding: 7px 10px; }
+  .grid { gap: 6px; }
+  .body { padding: 6px 8px 8px; }
+  .price { font-size: 15px; }
+  .title { font-size: 12.5px; }
+  .tag { font-size: 10px; padding: 1px 5px; }
+  .meta { font-size: 11px; }
+  .actions { top: 5px; right: 5px; gap: 4px; }
+  .icon-btn { width: 32px; height: 32px; }
+  .toolbar select { flex-basis: 100%; }
+  .pager button { min-width: 34px; height: 36px; padding: 0 8px; }
+}
+
+/* Téléphone en paysage (écran peu haut) : l'en-tête défile avec la page pour libérer la hauteur */
+@media (max-height: 500px) and (orientation: landscape) {
+  header { position: static; }
+  body::before { display: none; }
+  aside { top: max(10px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); }
+  .sheet-bg { padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+  .empty { padding: 24px 20px; }
+}
+
+/* Écrans doubles et pliables à charnière verticale (Surface Duo, Galaxy Fold ouvert à double fenêtre) :
+   filtres sur l'écran de gauche, annonces sur celui de droite, rien sous la charnière */
+@media (horizontal-viewport-segments: 2) {
+  .layout { max-width: none; padding-inline: 0; grid-template-columns: env(viewport-segment-width 0 0) 1fr;
+    column-gap: calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0)); }
+  aside { display: block; position: sticky; inset: auto; top: 74px; height: auto; align-self: start; max-height: calc(100dvh - 90px);
+    margin-left: max(12px, env(safe-area-inset-left, 0px)); border-radius: 14px; padding-top: 6px; }
+  main { padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-left: 12px; }
+  #filtersToggle, #closeFilters { display: none !important; }
+}
 </style>
 <header>
   <div class="brand">🎯 Airsoft Occaz <small>toutes les annonces d'occasion en France, au même endroit</small></div>
